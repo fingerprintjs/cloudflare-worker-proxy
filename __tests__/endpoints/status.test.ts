@@ -71,6 +71,31 @@ describe('status page content', () => {
     const response = await worker.fetch(req, workerEnv)
     expect(await response.text()).toMatchSnapshot()
   })
+  test('when integration path depth is invalid', async () => {
+    const workerEnv: WorkerEnv = {
+      FPJS_INGRESS_BASE_HOST: config.ingressApi,
+      PROXY_SECRET: 'proxy_secret',
+      GET_RESULT_PATH: 'get_result',
+      AGENT_SCRIPT_DOWNLOAD_PATH: 'agent',
+      INTEGRATION_PATH_DEPTH: 0,
+    }
+    const req = new Request('http://localhost/worker_path/status')
+    const response = await worker.fetch(req, workerEnv)
+    expect(await response.text()).toMatchSnapshot()
+  })
+  test('when integration path depth is not set', async () => {
+    const workerEnv: WorkerEnv = {
+      FPJS_INGRESS_BASE_HOST: config.ingressApi,
+      PROXY_SECRET: 'proxy_secret',
+      GET_RESULT_PATH: 'get_result',
+      AGENT_SCRIPT_DOWNLOAD_PATH: 'agent',
+      INTEGRATION_PATH_DEPTH: null,
+    }
+    const req = new Request('http://localhost/worker_path/status')
+    const response = await worker.fetch(req, workerEnv)
+    const body = await response.text()
+    expect(body).toMatchSnapshot()
+  })
 })
 
 describe('status page response headers', () => {

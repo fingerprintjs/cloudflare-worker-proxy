@@ -63,8 +63,19 @@ export function getStatusPagePath(): string {
   return `/status`
 }
 
+export const integrationPathDepthVarName = 'INTEGRATION_PATH_DEPTH'
+export function isIntegrationPathDepthValid(env: WorkerEnv) {
+  const integrationPathDepth = env[integrationPathDepthVarName]
+  if (integrationPathDepth !== null) {
+    return Number.isInteger(integrationPathDepth) && integrationPathDepth > 0
+  }
+
+  // The default value is valid
+  return true
+}
+
 export function getIntegrationPathDepth(env: WorkerEnv): number {
-  const integrationPathDepth = env['INTEGRATION_PATH_DEPTH']
+  const integrationPathDepth = env[integrationPathDepthVarName]
   if (integrationPathDepth !== null) {
     if (!Number.isInteger(integrationPathDepth) || integrationPathDepth <= 0) {
       console.warn(

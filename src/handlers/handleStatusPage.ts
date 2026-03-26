@@ -6,6 +6,8 @@ import {
   agentScriptDownloadPathVarName,
   getResultPathVarName,
   proxySecretVarName,
+  isIntegrationPathDepthValid,
+  integrationPathDepthVarName,
 } from '../env'
 
 function generateNonce() {
@@ -39,7 +41,7 @@ function createWorkerVersionElement(): string {
 function createContactInformationElement(): string {
   return `
   <span>
-  ❓Please reach out our support via <a href='mailto:support@fingerprint.com'>support@fingerprint.com</a> if you have any issues
+  ❓Please contact <a href='mailto:support@fingerprint.com'>support@fingerprint.com</a> with any issues.
   </span>
   `
 }
@@ -48,44 +50,74 @@ function createEnvVarsInformationElement(env: WorkerEnv): string {
   const isScriptDownloadPathAvailable = isScriptDownloadPathSet(env)
   const isGetResultPathAvailable = isGetResultPathSet(env)
   const isProxySecretAvailable = isProxySecretSet(env)
-  const isAllVarsAvailable = isScriptDownloadPathAvailable && isGetResultPathAvailable && isProxySecretAvailable
+  const isIntegrationPathDepthAvailable = isIntegrationPathDepthValid(env)
 
-  let result = ''
-  if (!isAllVarsAvailable) {
-    result += `
+  const isAllRequiredVarsAvailable = isProxySecretAvailable && isIntegrationPathDepthAvailable
+  const isAllV3VarsAvailable = isScriptDownloadPathAvailable && isGetResultPathAvailable
+
+  let requiredResult = '<h2>Required Variables</h2>'
+  if (!isAllRequiredVarsAvailable) {
+    requiredResult += `
     <span>
-    The following environment variables are not defined. Please reach out our support team.
+    🚨 The following required environment variables are not defined or invalid:
     </span>
     `
-    if (!isScriptDownloadPathAvailable) {
-      result += `
-      <span>
-      ⚠️ <strong>${agentScriptDownloadPathVarName} </strong> is not set
-      </span>
-      `
-    }
-    if (!isGetResultPathAvailable) {
-      result += `
-      <span>
-      ⚠️ <strong>${getResultPathVarName} </strong> is not set
-      </span>
-      `
-    }
     if (!isProxySecretAvailable) {
-      result += `
+      requiredResult += `
       <span>
-      ⚠️ <strong>${proxySecretVarName} </strong> is not set
+      🔴 <strong>${proxySecretVarName} </strong> is not set
+      </span>
+      `
+    }
+    if (!isIntegrationPathDepthAvailable) {
+      requiredResult += `
+      <span>
+      🔴 <strong>${integrationPathDepthVarName} </strong> is not valid. The default value of 1 will be used instead.
       </span>
       `
     }
   } else {
-    result += `
+    requiredResult += `
     <span>
-     ✅ All environment variables are set
+     ✅ All required environment variables are set.
     </span>
     `
   }
-  return result
+
+  let v3Result = '<h2>V3 API Variables</h2>'
+  if (!isAllV3VarsAvailable) {
+    v3Result += `
+    <span>
+    ⚠️ The following environment variables are not defined or invalid. <br />
+    If you are not using the v3 API, these warnings can be safely ignored.
+    </span>
+    `
+    if (!isScriptDownloadPathAvailable) {
+      v3Result += `
+      <span>
+      🟡 <strong>${agentScriptDownloadPathVarName} </strong> is not set
+      </span>
+      `
+    }
+    if (!isGetResultPathAvailable) {
+      v3Result += `
+      <span>
+      🟡 <strong>${getResultPathVarName} </strong> is not set
+      </span>
+      `
+    }
+    v3Result += `
+    <span>
+    </span>
+    `
+  } else {
+    v3Result += `
+    <span>
+    ✅ All v3 API environment variables are set.
+    </span>
+    `
+  }
+  return requiredResult + v3Result
 }
 
 function buildBody(env: WorkerEnv, styleNonce: string): string {
@@ -100,6 +132,10 @@ function buildBody(env: WorkerEnv, styleNonce: string): string {
         display: block;
         padding-top: 1em;
         padding-bottom: 1em;
+        text-align: center;
+      }
+      h2 {
+        display: block;
         text-align: center;
       }
     </style>
