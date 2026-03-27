@@ -1,5 +1,4 @@
-import { handleDownloadScript } from './handleDownloadScript'
-import { handleIngressAPI } from './handleIngressAPI'
 import { handleStatusPage } from './handleStatusPage'
+import { handleApiRequest } from './handleApiRequest'
 
-export { handleDownloadScript, handleIngressAPI, handleStatusPage }
+export { handleStatusPage, handleApiRequest }

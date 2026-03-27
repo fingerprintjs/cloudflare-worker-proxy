@@ -1,4 +1,4 @@
-import { describe, test, assert, expect, beforeAll, beforeEach, afterAll, vi, type MockInstance } from 'vitest'
+import { describe, test, expect, beforeAll, beforeEach, afterAll, vi, type MockInstance } from 'vitest'
 import worker from '../../src/index'
 import { WorkerEnv } from '../../src/env'
 import { config } from '../../src/config'
@@ -40,27 +40,27 @@ describe('agent download cdn url from worker env', () => {
   test('custom cdn url', async () => {
     const env = {
       ...workerEnv,
-      FPJS_CDN_URL: 'cdn.test.com',
+      FPJS_INGRESS_BASE_HOST: 'api.test.com',
     } satisfies WorkerEnv
 
     const req = new Request(reqURL.toString())
     await worker.fetch(req, env)
     const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://cdn.test.com`)
-    expect(receivedURL.pathname).toBe('/v3/someApiKey')
+    expect(receivedURL.origin).toBe(`https://api.test.com`)
+    expect(receivedURL.pathname).toBe('/web/v3/someApiKey')
   })
 
   test('null cdn url', async () => {
     const env = {
       ...workerEnv,
-      FPJS_CDN_URL: null,
+      FPJS_INGRESS_BASE_HOST: null,
     } satisfies WorkerEnv
 
     const req = new Request(reqURL.toString())
     await worker.fetch(req, env)
     const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.fpcdn}`.toLowerCase())
-    expect(receivedURL.pathname).toBe('/v3/someApiKey')
+    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
+    expect(receivedURL.pathname).toBe('/web/v3/someApiKey')
   })
 })
 
@@ -93,8 +93,8 @@ describe('agent download request proxy URL', () => {
     const req = new Request(reqURL.toString())
     await worker.fetch(req, workerEnv)
     const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.fpcdn}`.toLowerCase())
-    expect(receivedURL.pathname).toBe('/v3/someApiKey')
+    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
+    expect(receivedURL.pathname).toBe('/web/v3/someApiKey')
   })
 
   test('version but no loaderVersion', async () => {
@@ -102,8 +102,8 @@ describe('agent download request proxy URL', () => {
     const req = new Request(reqURL.toString())
     await worker.fetch(req, workerEnv)
     const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.fpcdn}`.toLowerCase())
-    expect(receivedURL.pathname).toBe('/v4/someApiKey')
+    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
+    expect(receivedURL.pathname).toBe('/web/v4/someApiKey')
   })
 
   test('both version and loaderVersion', async () => {
@@ -112,8 +112,8 @@ describe('agent download request proxy URL', () => {
     const req = new Request(reqURL.toString())
     await worker.fetch(req, workerEnv)
     const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.fpcdn}`.toLowerCase())
-    expect(receivedURL.pathname).toBe('/v5/someApiKey/loader_v1.2.3.js')
+    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
+    expect(receivedURL.pathname).toBe('/web/v5/someApiKey/loader_v1.2.3.js')
   })
 
   test('invalid apiKey, version and loaderVersion', async () => {
@@ -123,7 +123,7 @@ describe('agent download request proxy URL', () => {
     const req = new Request(reqURL.toString())
     await worker.fetch(req, workerEnv)
     const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.fpcdn}`.toLowerCase())
+    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
   })
 })
 
@@ -159,8 +159,7 @@ describe('agent download request query parameters', () => {
     await worker.fetch(req, workerEnv)
     const url = new URL(receivedReqURL)
     const iiValues = url.searchParams.getAll('ii')
-    expect(iiValues.length).toBe(1)
-    expect(iiValues[0]).toBe(`fingerprintjs-pro-cloudflare/${__current_worker_version__}/procdn`)
+    expect(iiValues.length).toBe(0)
   })
   test('traffic monitoring when there is ii parameter before', async () => {
     reqURL.searchParams.append('ii', 'fingerprintjs-pro-react/v1.2.3')
@@ -168,31 +167,21 @@ describe('agent download request query parameters', () => {
     await worker.fetch(req, workerEnv)
     const url = new URL(receivedReqURL)
     const iiValues = url.searchParams.getAll('ii')
-    expect(iiValues.length).toBe(2)
+    expect(iiValues.length).toBe(1)
     expect(iiValues[0]).toBe('fingerprintjs-pro-react/v1.2.3')
-    expect(iiValues[1]).toBe(`fingerprintjs-pro-cloudflare/${__current_worker_version__}/procdn`)
   })
   test('whole query string when no ii parameter before', async () => {
     const req = new Request(reqURL.toString())
     await worker.fetch(req, workerEnv)
     const url = new URL(receivedReqURL)
-    expect(url.search).toBe(
-      '?apiKey=someApiKey' +
-        '&someKey=someValue' +
-        `&ii=fingerprintjs-pro-cloudflare%2F${__current_worker_version__}%2Fprocdn`
-    )
+    expect(url.search).toBe('?apiKey=someApiKey' + '&someKey=someValue')
   })
   test('whole query string when there is ii parameter before', async () => {
     reqURL.searchParams.append('ii', 'fingerprintjs-pro-react/v1.2.3')
     const req = new Request(reqURL.toString())
     await worker.fetch(req, workerEnv)
     const url = new URL(receivedReqURL)
-    expect(url.search).toBe(
-      '?apiKey=someApiKey' +
-        '&someKey=someValue' +
-        '&ii=fingerprintjs-pro-react%2Fv1.2.3' +
-        `&ii=fingerprintjs-pro-cloudflare%2F${__current_worker_version__}%2Fprocdn`
-    )
+    expect(url.search).toBe('?apiKey=someApiKey' + '&someKey=someValue' + '&ii=fingerprintjs-pro-react%2Fv1.2.3')
   })
 })
 
@@ -255,39 +244,35 @@ describe('agent download request HTTP headers', () => {
 describe('agent download request cache durations', () => {
   let fetchSpy: MockInstance<typeof fetch>
   const reqURL = new URL('https://example.com/worker_path/agent_download?apiKey=someApiKey')
-  let receivedCfObject: IncomingRequestCfProperties | RequestInitCfProperties | null | undefined = null
 
   beforeAll(() => {
     fetchSpy = vi.spyOn(globalThis, 'fetch')
-  })
-
-  beforeEach(() => {
-    receivedCfObject = null
   })
 
   afterAll(() => {
     fetchSpy.mockRestore()
   })
 
-  test('browser cache set to an hour when original value is higher', async () => {
-    fetchSpy.mockImplementation(async (_, init) => {
-      assert.isDefined(init)
-      receivedCfObject = init.cf
-      const responseHeaders = new Headers({
-        'cache-control': 'public, max-age=3613',
-      })
+  test.each(['text/javascript', 'text/javascript; charset=utf-8'])(
+    'browser cache set to an hour when original value is higher - content-type = %s',
+    async (contentType) => {
+      fetchSpy.mockImplementation(async () => {
+        const responseHeaders = new Headers({
+          'content-type': contentType,
+          'cache-control': 'public, max-age=3613',
+        })
 
-      return new Response('', { headers: responseHeaders })
-    })
-    const req = new Request(reqURL.toString())
-    const response = await worker.fetch(req, workerEnv)
-    expect(response.headers.get('cache-control')).toBe('public, max-age=3600, s-maxage=60')
-  })
+        return new Response('', { headers: responseHeaders })
+      })
+      const req = new Request(reqURL.toString())
+      const response = await worker.fetch(req, workerEnv)
+      expect(response.headers.get('cache-control')).toBe('public, max-age=3600, s-maxage=60')
+    }
+  )
   test('browser cache is the same when original value is lower than an hour', async () => {
-    fetchSpy.mockImplementation(async (_, init) => {
-      assert.isDefined(init)
-      receivedCfObject = init.cf
+    fetchSpy.mockImplementation(async () => {
       const responseHeaders = new Headers({
+        'content-type': 'text/javascript',
         'cache-control': 'public, max-age=100',
       })
 
@@ -298,10 +283,9 @@ describe('agent download request cache durations', () => {
     expect(response.headers.get('cache-control')).toBe('public, max-age=100, s-maxage=60')
   })
   test('proxy cache set to a minute when original value is higher', async () => {
-    fetchSpy.mockImplementation(async (_, init) => {
-      assert.isDefined(init)
-      receivedCfObject = init.cf
+    fetchSpy.mockImplementation(async () => {
       const responseHeaders = new Headers({
+        'content-type': 'text/javascript',
         'cache-control': 'public, max-age=3613, s-maxage=575500',
       })
 
@@ -312,10 +296,9 @@ describe('agent download request cache durations', () => {
     expect(response.headers.get('cache-control')).toBe('public, max-age=3600, s-maxage=60')
   })
   test('proxy cache is the same when original value is lower than a minute', async () => {
-    fetchSpy.mockImplementation(async (_, init) => {
-      assert.isDefined(init)
-      receivedCfObject = init.cf
+    fetchSpy.mockImplementation(async () => {
       const responseHeaders = new Headers({
+        'content-type': 'text/javascript',
         'cache-control': 'public, max-age=3613, s-maxage=10',
       })
 
@@ -324,21 +307,6 @@ describe('agent download request cache durations', () => {
     const req = new Request(reqURL.toString())
     const response = await worker.fetch(req, workerEnv)
     expect(response.headers.get('cache-control')).toBe('public, max-age=3600, s-maxage=10')
-  })
-  test('cloudflare network cache is set to 1 min', async () => {
-    fetchSpy.mockImplementation(async (_, init) => {
-      assert.isDefined(init)
-      receivedCfObject = init.cf
-      const responseHeaders = new Headers({
-        'cache-control': 'public, max-age=3613, s-maxage=575500',
-      })
-
-      return new Response('', { headers: responseHeaders })
-    })
-    const req = new Request(reqURL.toString())
-    await worker.fetch(req, workerEnv)
-    expect(receivedCfObject).toMatchObject({ cacheTtl: 60 })
-    expect({ cacheTtl: 60 }).toMatchObject(receivedCfObject!)
   })
 })
 

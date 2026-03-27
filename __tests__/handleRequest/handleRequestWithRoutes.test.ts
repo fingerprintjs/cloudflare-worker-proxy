@@ -3,6 +3,9 @@ import { handleRequestWithRoutes, Route } from '../../src/handler'
 import { getGetResultPath, getScriptDownloadPath, getStatusPagePath, WorkerEnv } from '../../src/env'
 import { createRoutePathPrefix } from '../../src/utils'
 import { config } from '../../src/config'
+import { handleApiRequest } from '../../src/handlers'
+
+vi.mock('../../src/handlers')
 
 const workerPath = 'worker'
 const agentScriptDownloadPath = 'agent'
@@ -154,6 +157,44 @@ describe('status page', () => {
   })
 })
 
+describe('default route', () => {
+  let routes: Route[] = []
+  const mockApiRequestHandler = vi.mocked(handleApiRequest)
+  let mockIngressAPIHandler: Mock
+  beforeEach(() => {
+    mockApiRequestHandler.mockReset()
+
+    mockIngressAPIHandler = vi.fn()
+    routes = [
+      {
+        pathPrefix: createRoutePathPrefix(getGetResultPath(env)),
+        handler: mockIngressAPIHandler,
+      },
+    ]
+  })
+
+  test('standard path', async () => {
+    const request = new Request(`https://example.com/${workerPath}`)
+    await handleRequestWithRoutes(request, env, routes)
+    expect(mockApiRequestHandler).toHaveBeenCalledTimes(1)
+    expect(mockIngressAPIHandler).not.toHaveBeenCalled()
+  })
+
+  test('slash in the end', async () => {
+    const request = new Request(`https://example.com/${workerPath}`)
+    await handleRequestWithRoutes(request, env, routes)
+    expect(mockApiRequestHandler).toHaveBeenCalledTimes(1)
+    expect(mockIngressAPIHandler).not.toHaveBeenCalled()
+  })
+
+  test.each([['GET', 'POST']])('different than get result path suffix - method = %s', async (method) => {
+    const request = new Request(`https://example.com/${workerPath}/web/v4`, { method })
+    await handleRequestWithRoutes(request, env, routes)
+    expect(mockApiRequestHandler).toHaveBeenCalledTimes(1)
+    expect(mockIngressAPIHandler).not.toHaveBeenCalled()
+  })
+})
+
 describe('no match paths', () => {
   let routes: Route[] = []
   let mockAgentDownloadHandler: Mock
@@ -179,22 +220,21 @@ describe('no match paths', () => {
     ]
   })
 
-  test.each([
-    [`https://example.com/${workerPath}/hello`, env],
-    ['https://example.com/hello', env],
-    ['https://example.com/hello', { ...env, INTEGRATION_PATH_DEPTH: 2 }],
-  ])('no match - %s', async (url, testEnv) => {
-    const reqUrl = new URL(url)
-    const request = new Request(reqUrl)
-    const response = await handleRequestWithRoutes(request, testEnv, routes)
-    expect(mockAgentDownloadHandler).not.toHaveBeenCalled()
-    expect(mockIngressAPIHandler).not.toHaveBeenCalled()
-    expect(mockStatusPageHandler).not.toHaveBeenCalled()
-    expect(response.status).toBe(404)
-    expect(response.headers.get('content-type')).toBe('application/json')
-    const responseBody = await response.json<any>()
-    const expected = { error: `unmatched path ${reqUrl.pathname}` }
-    expect(responseBody).toMatchObject(expected)
-    expect(expected).toMatchObject(responseBody)
-  })
+  test.each([['https://example.com/hello', { ...env, INTEGRATION_PATH_DEPTH: 2 }]])(
+    'no match - %s',
+    async (url, testEnv) => {
+      const reqUrl = new URL(url)
+      const request = new Request(reqUrl)
+      const response = await handleRequestWithRoutes(request, testEnv, routes)
+      expect(mockAgentDownloadHandler).not.toHaveBeenCalled()
+      expect(mockIngressAPIHandler).not.toHaveBeenCalled()
+      expect(mockStatusPageHandler).not.toHaveBeenCalled()
+      expect(response.status).toBe(404)
+      expect(response.headers.get('content-type')).toBe('application/json')
+      const responseBody = await response.json<any>()
+      const expected = { error: `unmatched path ${reqUrl.pathname}` }
+      expect(responseBody).toMatchObject(expected)
+      expect(expected).toMatchObject(responseBody)
+    }
+  )
 })

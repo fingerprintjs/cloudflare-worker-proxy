@@ -1,7 +1,14 @@
-import { getScriptDownloadPath, getGetResultPath, WorkerEnv, getStatusPagePath, getIntegrationPathDepth } from './env'
+import {
+  getScriptDownloadPath,
+  getGetResultPath,
+  WorkerEnv,
+  getStatusPagePath,
+  getIntegrationPathDepth,
+  getIngressBaseHost,
+} from './env'
 
-import { handleDownloadScript, handleIngressAPI, handleStatusPage } from './handlers'
-import { createRoutePathPrefix, stripPrefixPathSegments } from './utils'
+import { handleApiRequest, handleStatusPage } from './handlers'
+import { getIngressEndpoint, createRoutePathPrefix, stripPrefixPathSegments, getAgentScriptEndpoint } from './utils'
 
 export type Route = {
   /**
@@ -17,21 +24,55 @@ export type Route = {
    *
    * @param request the {@link Request} the worker received
    * @param env the {@link WorkerEnv}
+   * @param receivedRequestURL the {@link URL} for the received request
    * @param targetPath the URL path with the integration path removed
    * @returns the {@link Response} to return to the client
    */
-  handler: (request: Request, env: WorkerEnv, targetPath: string) => Response | Promise<Response>
+  handler: (
+    request: Request,
+    env: WorkerEnv,
+    receivedRequestURL: URL,
+    targetPath: string
+  ) => Response | Promise<Response>
 }
+
+function copySearchParams(oldURL: URL, newURL: URL): void {
+  newURL.search = new URLSearchParams(oldURL.search).toString()
+}
+
+function createIngressRequestURL(env: WorkerEnv, receivedRequestURL: URL, targetPath: string) {
+  const ingressBaseUrl = getIngressBaseHost(env)!
+
+  const endpoint = getIngressEndpoint(ingressBaseUrl, receivedRequestURL.searchParams, targetPath)
+  const newURL = new URL(endpoint)
+  copySearchParams(receivedRequestURL, newURL)
+
+  return newURL
+}
+
+function createAgentScriptURL(env: WorkerEnv, receivedRequestURL: URL) {
+  const ingressBaseUrl = getIngressBaseHost(env)!
+
+  const agentScriptEndpoint = getAgentScriptEndpoint(ingressBaseUrl, receivedRequestURL.searchParams)
+  const newURL = new URL(agentScriptEndpoint)
+  copySearchParams(receivedRequestURL, newURL)
+
+  return newURL
+}
+
+const DEFAULT_ROUTE: Route['handler'] = (request, env, receivedRequestURL, targetPath) =>
+  handleApiRequest(request, env, createIngressRequestURL(env, receivedRequestURL, targetPath))
 
 function createRoutes(env: WorkerEnv): Route[] {
   const routes: Route[] = []
   const downloadScriptRoute: Route = {
     pathPrefix: createRoutePathPrefix(getScriptDownloadPath(env)),
-    handler: handleDownloadScript,
+    handler: (request, env, receivedRequestURL) =>
+      handleApiRequest(request, env, createAgentScriptURL(env, receivedRequestURL)),
   }
   const ingressAPIRoute: Route = {
     pathPrefix: createRoutePathPrefix(getGetResultPath(env)),
-    handler: handleIngressAPI,
+    handler: DEFAULT_ROUTE,
   }
   const statusRoute: Route = {
     pathPrefix: createRoutePathPrefix(getStatusPagePath()),
@@ -66,11 +107,16 @@ export function handleRequestWithRoutes(
     for (const route of routes) {
       if (routeMatchingPath === route.pathPrefix || routeMatchingPath.startsWith(`${route.pathPrefix}/`)) {
         const targetPath = routeMatchingPath.slice(route.pathPrefix.length) || '/'
-        return route.handler(request, env, targetPath)
+        return route.handler(request, env, url, targetPath)
       }
     }
+
+    // If the request doesn't match any of the routes, handle it as an API request.
+    return DEFAULT_ROUTE(request, env, url, routeMatchingPath)
   }
 
+  // This should not occur in practice because the route patterns for
+  // the worker are expected to prevent this case.
   return handleNoMatch(url.pathname)
 }
 

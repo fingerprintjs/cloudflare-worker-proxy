@@ -5,10 +5,6 @@ function getTrafficMonitoringValue(type: 'procdn' | 'ingress'): string {
   return `fingerprintjs-pro-cloudflare/${INT_VERSION}/${type}`
 }
 
-export function addTrafficMonitoringSearchParamsForProCDN(url: URL) {
-  url.searchParams.append(PARAM_NAME, getTrafficMonitoringValue('procdn'))
-}
-
-export function addTrafficMonitoringSearchParamsForVisitorIdRequest(url: URL) {
+export function addTrafficMonitoringSearchParamsForIngressRequest(url: URL) {
   url.searchParams.append(PARAM_NAME, getTrafficMonitoringValue('ingress'))
 }

@@ -108,7 +108,7 @@ jobs:
         shell: bash
       - name: Run test
         run: |
-          npm exec -y "git+https://github.com/fingerprintjs/dx-team-mock-for-proxy-integrations-e2e-tests.git" -- --api-url="${{env.api_url}}" --cdn-proxy-url="https://${{env.test_client_domain}}/${{env.worker_path}}/${{env.agent_download_path}}" --ingress-proxy-url="https://${{env.test_client_domain}}/${{env.worker_path}}/${{env.get_result_path}}" --traffic-name="fingerprintjs-pro-cloudflare" --integration-version="${{steps.version.outputs.prop}}"
+          npm exec -y "git+https://github.com/fingerprintjs/dx-team-mock-for-proxy-integrations-e2e-tests.git" -- --api-url="${{env.api_url}}" --integration-url="https://${{env.test_client_domain}}/${{env.worker_path}}/" --cdn-path="${{env.agent_download_path}}" --ingress-path="${{env.get_result_path}}" --traffic-name="fingerprintjs-pro-cloudflare" --integration-version="${{steps.version.outputs.prop}}" --enable-new-tests=true
         env:
           test_client_domain: ${{secrets.TEST_CLIENT_DOMAIN}}
           worker_version: ${{steps.version.outputs.prop}}

@@ -4,18 +4,14 @@ export function getAgentScriptEndpoint(baseCdnUrl: string, searchParams: URLSear
   const apiKey = searchParams.get('apiKey')
   const apiVersion = searchParams.get('version') || DEFAULT_AGENT_VERSION
 
-  const base = `https://${baseCdnUrl}/v${apiVersion}/${apiKey}`
+  const base = `https://${baseCdnUrl}/web/v${apiVersion}/${apiKey}`
   const loaderVersion = searchParams.get('loaderVersion')
   const lv = loaderVersion ? `/loader_v${loaderVersion}.js` : ''
 
   return `${base}${lv}`
 }
 
-export function getIngressEndpointUrl(
-  baseIngressUrl: string,
-  searchParams: URLSearchParams,
-  targetPath: string
-): string {
+export function getIngressEndpoint(baseIngressUrl: string, searchParams: URLSearchParams, targetPath: string): string {
   if (!targetPath.startsWith('/')) {
     throw new Error('targetPath must start with /')
   }
