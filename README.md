@@ -12,30 +12,30 @@
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/:license-mit-blue.svg" alt="MIT license"></a>
 <a href="https://discord.gg/39EpE2neBg"><img src="https://img.shields.io/discord/852099967190433792?style=logo&label=Discord&logo=Discord&logoColor=white" alt="Discord server"></a>
 
-# Fingerprint Pro Cloudflare worker
+# Fingerprint Cloudflare worker proxy
 
 [Fingerprint](https://fingerprint.com/) is a device intelligence platform offering visitor identification and smart signals with industry-leading accuracy.
 
-Fingerprint Pro Cloudflare Integration is responsible for
+The Fingerprint Cloudflare Integration is responsible for
 
-- Proxying download requests of the latest Fingerprint Pro JS Agent between your site and Fingerprint CDN.
-- Proxying identification requests and responses between your site and Fingerprint Pro's APIs.
+- Proxying download requests of the latest Fingerprint JS Agent between your site and Fingerprint CDN.
+- Proxying identification requests and responses between your site and Fingerprint's APIs.
 
-This [improves](https://dev.fingerprint.com/docs/cloudflare-integration#the-benefits-of-using-the-cloudflare-integration) both accuracy and reliability of visitor identification and bot detection on your site.
+This [improves](https://docs.fingerprint.com/docs/cloudflare-integration#the-benefits-of-using-the-cloudflare-integration) both accuracy and reliability of visitor identification and bot detection on your site.
 
 ## Requirements
 
-* [Fingerprint Pro account](https://dashboard.fingerprint.com/signup) with the _Owner_ role assigned.
+* A [Fingerprint account](https://dashboard.fingerprint.com/signup) with the _Owner_ role assigned.
 * A website served by Cloudflare. For maximum accuracy benefits, your website should be [proxied by Cloudflare](https://developers.cloudflare.com/dns/manage-dns-records/reference/proxied-dns-records/) (not DNS-only). 
 
-See the [Cloudflare integration guide](https://dev.fingerprint.com/docs/cloudflare-integration#setup) for more details. 
+See the [Cloudflare integration guide](https://docs.fingerprint.com/docs/cloudflare-integration#setup) for more details. 
 
 
 ## How to install
 
 You can install the Cloudflare integration using an [installation wizard](https://dashboard.fingerprint.com/integrations) in the Fingerprint dashboard. 
 
-See the [Cloudflare integration guide](https://dev.fingerprint.com/docs/cloudflare-integration#setup) for more details.
+See the [Cloudflare integration guide](https://docs.fingerprint.com/docs/cloudflare-integration#setup) for more details.
 
 ## Support
 

@@ -1,7 +1,7 @@
 {
   "name": "@fingerprint/cloudflare-worker-proxy",
   "version": "1.7.0-rc.0",
-  "description": "FingerprintJS Pro Cloudflare Worker",
+  "description": "Fingerprint Cloudflare Worker Proxy",
   "author": "FingerprintJS, Inc (https://fingerprintjs.com)",
   "license": "MIT",
   "private": true,
@@ -12,7 +12,7 @@
     "url": "https://github.com/fingerprintjs/cloudflare-worker-proxy.git"
   },
   "exports": {
-    "./worker": "./dist/fingerprint_pro_cloudflare_worker_local_development/index.js"
+    "./worker": "./dist/fingerprint_proxy_local_development/index.js"
   },
   "scripts": {
     "dev": "vite",

@@ -6,12 +6,15 @@ import { config } from '../../src/config'
 const workerEnv: WorkerEnv = {
   FPJS_INGRESS_BASE_HOST: config.ingressApi,
   PROXY_SECRET: 'proxy_secret',
-  GET_RESULT_PATH: 'get_result',
-  AGENT_SCRIPT_DOWNLOAD_PATH: 'agent_download',
+  GET_RESULT_PATH: null,
+  AGENT_SCRIPT_DOWNLOAD_PATH: null,
   INTEGRATION_PATH_DEPTH: 1,
 }
 
-describe('agent download cdn url from worker env', () => {
+const agentDownloadPath = '/web/v4/someApiKey'
+const agentDownloadUrl = 'https://example.com/worker_path' + agentDownloadPath
+
+describe('v4 agent download cdn url from worker env', () => {
   let fetchSpy: MockInstance<typeof fetch>
   let reqURL: URL
   let receivedReqURL = ''
@@ -26,7 +29,7 @@ describe('agent download cdn url from worker env', () => {
   })
 
   beforeEach(() => {
-    reqURL = new URL('https://example.com/worker_path/agent_download')
+    reqURL = new URL(agentDownloadUrl)
     reqURL.searchParams.append('apiKey', 'someApiKey')
 
     receivedReqURL = ''
@@ -46,7 +49,7 @@ describe('agent download cdn url from worker env', () => {
     await worker.fetch(req, env)
     const receivedURL = new URL(receivedReqURL)
     expect(receivedURL.origin).toBe(`https://api.test.com`)
-    expect(receivedURL.pathname).toBe('/web/v3/someApiKey')
+    expect(receivedURL.pathname).toBe(agentDownloadPath)
   })
 
   test('null cdn url', async () => {
@@ -59,70 +62,7 @@ describe('agent download cdn url from worker env', () => {
     await worker.fetch(req, env)
     const receivedURL = new URL(receivedReqURL)
     expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
-    expect(receivedURL.pathname).toBe('/web/v3/someApiKey')
-  })
-})
-
-describe('agent download request proxy URL', () => {
-  let fetchSpy: MockInstance<typeof fetch>
-  let reqURL: URL
-  let receivedReqURL = ''
-
-  beforeAll(() => {
-    fetchSpy = vi.spyOn(globalThis, 'fetch')
-    fetchSpy.mockImplementation(async (input, init) => {
-      const req = new Request(input, init)
-      receivedReqURL = req.url
-      return new Response()
-    })
-  })
-
-  beforeEach(() => {
-    reqURL = new URL('https://example.com/worker_path/agent_download')
-    reqURL.searchParams.append('apiKey', 'someApiKey')
-
-    receivedReqURL = ''
-  })
-
-  afterAll(() => {
-    fetchSpy.mockRestore()
-  })
-
-  test('no version', async () => {
-    const req = new Request(reqURL.toString())
-    await worker.fetch(req, workerEnv)
-    const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
-    expect(receivedURL.pathname).toBe('/web/v3/someApiKey')
-  })
-
-  test('version but no loaderVersion', async () => {
-    reqURL.searchParams.append('version', '4')
-    const req = new Request(reqURL.toString())
-    await worker.fetch(req, workerEnv)
-    const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
-    expect(receivedURL.pathname).toBe('/web/v4/someApiKey')
-  })
-
-  test('both version and loaderVersion', async () => {
-    reqURL.searchParams.append('version', '5')
-    reqURL.searchParams.append('loaderVersion', '1.2.3')
-    const req = new Request(reqURL.toString())
-    await worker.fetch(req, workerEnv)
-    const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
-    expect(receivedURL.pathname).toBe('/web/v5/someApiKey/loader_v1.2.3.js')
-  })
-
-  test('invalid apiKey, version and loaderVersion', async () => {
-    reqURL.searchParams.set('apiKey', 'foo.bar/baz')
-    reqURL.searchParams.set('version', 'bar.foo/baz')
-    reqURL.searchParams.set('loaderVersion', 'baz.bar/foo')
-    const req = new Request(reqURL.toString())
-    await worker.fetch(req, workerEnv)
-    const receivedURL = new URL(receivedReqURL)
-    expect(receivedURL.origin).toBe(`https://${config.ingressApi}`.toLowerCase())
+    expect(receivedURL.pathname).toBe(agentDownloadPath)
   })
 })
 
@@ -142,8 +82,7 @@ describe('agent download request query parameters', () => {
   })
 
   beforeEach(() => {
-    reqURL = new URL('https://example.com/worker_path/agent_download')
-    reqURL.searchParams.append('apiKey', 'someApiKey')
+    reqURL = new URL(agentDownloadUrl)
     reqURL.searchParams.append('someKey', 'someValue')
 
     receivedReqURL = ''
@@ -173,20 +112,20 @@ describe('agent download request query parameters', () => {
     const req = new Request(reqURL.toString())
     await worker.fetch(req, workerEnv)
     const url = new URL(receivedReqURL)
-    expect(url.search).toBe('?apiKey=someApiKey' + '&someKey=someValue')
+    expect(url.search).toBe('?someKey=someValue')
   })
   test('whole query string when there is ii parameter before', async () => {
     reqURL.searchParams.append('ii', 'fingerprintjs-pro-react/v1.2.3')
     const req = new Request(reqURL.toString())
     await worker.fetch(req, workerEnv)
     const url = new URL(receivedReqURL)
-    expect(url.search).toBe('?apiKey=someApiKey' + '&someKey=someValue' + '&ii=fingerprintjs-pro-react%2Fv1.2.3')
+    expect(url.search).toBe('?someKey=someValue' + '&ii=fingerprintjs-pro-react%2Fv1.2.3')
   })
 })
 
 describe('agent download request HTTP headers', () => {
   let fetchSpy: MockInstance<typeof fetch>
-  const reqURL = new URL('https://example.com/worker_path/agent_download?apiKey=someApiKey')
+  const reqURL = new URL(agentDownloadUrl)
   let receivedHeaders: Headers
 
   beforeAll(() => {
@@ -242,7 +181,7 @@ describe('agent download request HTTP headers', () => {
 
 describe('agent download request cache durations', () => {
   let fetchSpy: MockInstance<typeof fetch>
-  const reqURL = new URL('https://example.com/worker_path/agent_download?apiKey=someApiKey')
+  const reqURL = new URL(agentDownloadUrl)
 
   beforeAll(() => {
     fetchSpy = vi.spyOn(globalThis, 'fetch')
@@ -311,7 +250,7 @@ describe('agent download request cache durations', () => {
 
 describe('agent download request HTTP method', () => {
   let fetchSpy: MockInstance<typeof fetch>
-  const reqURL = new URL('https://example.com/worker_path/agent_download?apiKey=someApiKey')
+  const reqURL = new URL(agentDownloadUrl)
   let requestMethod: string
 
   beforeAll(() => {
@@ -365,7 +304,7 @@ describe('agent download response', () => {
       }
       return new Response(agentScript, { headers })
     })
-    const req = new Request('https://example.com/worker_path/agent_download')
+    const req = new Request(agentDownloadUrl)
     const response = await worker.fetch(req, workerEnv)
     expect(response.headers.get('content-type')).toBe('text/javascript; charset=utf-8')
     expect(await response.text()).toBe(agentScript)
@@ -377,7 +316,7 @@ describe('agent download response', () => {
       }
       return new Response('', { headers })
     })
-    const req = new Request('https://example.com/worker_path/agent_download')
+    const req = new Request(agentDownloadUrl)
     const response = await worker.fetch(req, workerEnv)
     expect(response.headers.get('strict-transport-security')).toBe(null)
   })
@@ -388,7 +327,7 @@ describe('agent download response', () => {
       }
       return new Response('', { headers })
     })
-    const req = new Request('https://example.com/worker_path/agent_download')
+    const req = new Request(agentDownloadUrl)
     const response = await worker.fetch(req, workerEnv)
     expect(response.headers.get('some-header')).toBe('some-value')
   })
@@ -396,7 +335,7 @@ describe('agent download response', () => {
     fetchSpy.mockImplementation(async () => {
       return new Response('some error', { status: 500, headers: { 'content-type': 'text/plain; charset=UTF-8' } })
     })
-    const req = new Request('https://example.com/worker_path/agent_download')
+    const req = new Request(agentDownloadUrl)
     const response = await worker.fetch(req, workerEnv)
     expect(response.headers.get('content-type')).toBe('text/plain; charset=UTF-8')
     expect(response.status).toBe(500)
@@ -406,7 +345,7 @@ describe('agent download response', () => {
     fetchSpy.mockImplementation(async () => {
       throw new Error('some error')
     })
-    const req = new Request('https://example.com/worker_path/agent_download')
+    const req = new Request(agentDownloadUrl)
     const response = await worker.fetch(req, workerEnv)
     expect(response.headers.get('content-type')).toBe('application/json')
     expect(response.status).toBe(500)

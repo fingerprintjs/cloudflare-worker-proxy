@@ -1,4 +1,4 @@
-# Contributing to FingerprintJS Pro Cloudflare Worker
+# Contributing to FingerprintJS Cloudflare Worker
 
 ## Requirements
 
@@ -22,23 +22,31 @@ Create pull requests for the `main` branch.
 ### How to build
 After cloning the repo, run `pnpm install` to install packages.
 
-Run `pnpm build` for creating a build in `dist` folder. The build creates the worker script file, located at `dist/fingerprint_pro_cloudflare_worker_local_development/index.js`.
+Run `pnpm build` for creating a build in `dist` folder. The build creates the worker script file, located at `dist/fingerprint_proxy_local_development/index.js`.
 
 ### How to run locally
 
 Running `pnpm install` will install [Wrangler](https://developers.cloudflare.com/workers/wrangler/) from Cloudflare locally.
 
-After running `pnpm install`, you can run `pnpm dev` to run the worker locally. By default, it will run on `http://localhost:5173` and will have the following endpoints:
-- `/agent` for downloading the Pro Agent script (a.k.a `import` url or `scriptUrlPattern`)
-- `/getResult` for getting the result (a.k.a. `endpoint`)
+After running `pnpm install`, you can run `pnpm dev` to run the worker locally. The local worker will be available at `http://localhost:5173`.
+
+By default, the worker will use an `INTEGRATION_PATH_DEPTH=1` and an unset `AGENT_SCRIPT_DOWNLOAD_PATH` and `GET_RESULT_PATH`
+resulting in all routes nested under an arbitrary, single path segment.
+
+The available routes are:
+- `/INTEGRATION_PATH/web/v4/API_KEY` for downloading the Fingerprint agent script (a.k.a `import` url)
+- `/INTEGRATION_PATH` for getting the result (a.k.a. `endpoints`)
+- `/INTEGRATION_PATH/status` for getting the status page
+
+where `INTEGRATION_PATH` is a placeholder for any valid path segment.
 
 You can use the worker locally with a client like the example below:
 ```html
 <script>
-  // REPLACE <API_KEY>
-  const fpPromise = import('http://localhost:5173/agent?apiKey=<API_KEY>') 
-    .then(FingerprintJS => FingerprintJS.load({
-      endpoint: 'http://localhost:5173/getResult'
+  // REPLACE API_KEY, INTEGRATION_PATH
+  const fpPromise = import('http://localhost:5173/INTEGRATION_PATH/web/v4/API_KEY') 
+    .then((Fingerprint) => Fingerprint.start({
+      endpoints: 'http://localhost:5173/INTEGRATION_PATH'
     }))
 
   // Get the visitor identifier when you need it.
@@ -46,7 +54,7 @@ You can use the worker locally with a client like the example below:
     .then(fp => fp.get())
     .then(result => {
       // This is the visitor identifier:
-      const visitorId = result.visitorId
+      const visitorId = result.visitor_id
       console.log(visitorId)
     })
 </script>
@@ -107,4 +115,4 @@ The workflow `release.yml` is responsible for releasing a new version. Run it on
 
 ### How to keep your worker up-to-date
 
-The [Fingerprint Cloudflare Proxy Integration](https://dev.fingerprint.com/docs/cloudflare-integration) always uses the latest stable version of this worker, and upgrades customer workers automatically.
+The [Fingerprint Cloudflare Proxy Integration](https://docs.fingerprint.com/docs/cloudflare-integration) always uses the latest stable version of this worker, and upgrades customer workers automatically.

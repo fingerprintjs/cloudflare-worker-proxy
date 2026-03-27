@@ -12,7 +12,6 @@ const agentScriptDownloadPath = 'agent'
 const getResultPath = 'get-result'
 const proxySecret = 'proxySecret'
 const env: WorkerEnv = {
-  FPJS_CDN_URL: config.fpcdn,
   FPJS_INGRESS_BASE_HOST: config.ingressApi,
   AGENT_SCRIPT_DOWNLOAD_PATH: agentScriptDownloadPath,
   GET_RESULT_PATH: getResultPath,

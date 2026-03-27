@@ -5,6 +5,8 @@ import {
   getStatusPagePath,
   getIntegrationPathDepth,
   getIngressBaseHost,
+  isScriptDownloadPathSet,
+  isGetResultPathSet,
 } from './env'
 
 import { handleApiRequest, handleStatusPage } from './handlers'
@@ -65,21 +67,28 @@ const DEFAULT_ROUTE: Route['handler'] = (request, env, receivedRequestURL, targe
 
 function createRoutes(env: WorkerEnv): Route[] {
   const routes: Route[] = []
-  const downloadScriptRoute: Route = {
-    pathPrefix: createRoutePathPrefix(getScriptDownloadPath(env)),
-    handler: (request, env, receivedRequestURL) =>
-      handleApiRequest(request, env, createAgentScriptURL(env, receivedRequestURL)),
+
+  if (isScriptDownloadPathSet(env)) {
+    const downloadScriptRoute: Route = {
+      pathPrefix: createRoutePathPrefix(getScriptDownloadPath(env)),
+      handler: (request, env, receivedRequestURL) =>
+        handleApiRequest(request, env, createAgentScriptURL(env, receivedRequestURL)),
+    }
+    routes.push(downloadScriptRoute)
   }
-  const ingressAPIRoute: Route = {
-    pathPrefix: createRoutePathPrefix(getGetResultPath(env)),
-    handler: DEFAULT_ROUTE,
+
+  if (isGetResultPathSet(env)) {
+    const ingressAPIRoute: Route = {
+      pathPrefix: createRoutePathPrefix(getGetResultPath(env)),
+      handler: DEFAULT_ROUTE,
+    }
+    routes.push(ingressAPIRoute)
   }
+
   const statusRoute: Route = {
     pathPrefix: createRoutePathPrefix(getStatusPagePath()),
     handler: handleStatusPage,
   }
-  routes.push(downloadScriptRoute)
-  routes.push(ingressAPIRoute)
   routes.push(statusRoute)
 
   return routes

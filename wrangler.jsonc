@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "fingerprint-pro-cloudflare-worker-local-development",
+  "name": "fingerprint-proxy-local-development",
   "compatibility_date": "2026-03-10",
   "main": "./src/index.ts",
   "workers_dev": false,
@@ -9,7 +9,6 @@
     "AGENT_SCRIPT_DOWNLOAD_PATH": "",
     "GET_RESULT_PATH": "",
     "PROXY_SECRET": "",
-    "FPJS_CDN_URL": "",
     "FPJS_INGRESS_BASE_HOST": "",
     "INTEGRATION_PATH_DEPTH": 1
   },

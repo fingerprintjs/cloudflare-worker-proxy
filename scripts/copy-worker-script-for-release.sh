@@ -9,5 +9,5 @@ fi
 
 set -x
 
-cp ./dist/fingerprint_pro_cloudflare_worker_local_development/index.js ./dist/fingerprintjs-pro-cloudflare-worker.esm.js
-cp ./dist/fingerprint_pro_cloudflare_worker_local_development/index.js ./dist/fingerprint-cloudflare-worker-proxy.js
+cp ./dist/fingerprint_proxy_local_development/index.js ./dist/fingerprintjs-pro-cloudflare-worker.esm.js
+cp ./dist/fingerprint_proxy_local_development/index.js ./dist/fingerprint-cloudflare-worker-proxy.js

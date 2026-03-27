@@ -5,7 +5,6 @@ import { FPJSResponse } from '../../src/utils'
 import { config } from '../../src/config'
 
 const workerEnv: WorkerEnv = {
-  FPJS_CDN_URL: config.fpcdn,
   FPJS_INGRESS_BASE_HOST: config.ingressApi,
   PROXY_SECRET: 'proxy_secret',
   GET_RESULT_PATH: 'get_result',
@@ -314,7 +313,6 @@ describe('ingress API request headers', () => {
 
   test('even if proxy secret is undefined, other FPJS-Proxy-* headers are still added to the proxied request headers. Original headers are preserved.', async () => {
     const workerEnv: WorkerEnv = {
-      FPJS_CDN_URL: config.fpcdn,
       FPJS_INGRESS_BASE_HOST: config.ingressApi,
       PROXY_SECRET: null,
       GET_RESULT_PATH: 'get_result',

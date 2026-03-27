@@ -72,9 +72,8 @@ jobs:
             --arg get_result_path "${{ steps.random-path-generator.outputs.GET_RESULT_PATH }}" \
             --arg agent_download_path "${{ steps.random-path-generator.outputs.AGENT_DOWNLOAD_PATH }}" \
             --arg proxy_secret "secret" \
-            --arg fpjs_cdn_url "${{secrets.MOCK_FPCDN}}" \
             --arg fpjs_ingress_base_host "${{secrets.MOCK_INGRESS_API}}" \
-            '.name = $name | .route = $route | .vars.GET_RESULT_PATH = $get_result_path | .vars.AGENT_SCRIPT_DOWNLOAD_PATH = $agent_download_path | .vars.PROXY_SECRET = $proxy_secret | .vars.FPJS_CDN_URL = $fpjs_cdn_url | .vars.FPJS_INGRESS_BASE_HOST = $fpjs_ingress_base_host' \
+            '.name = $name | .route = $route | .vars.GET_RESULT_PATH = $get_result_path | .vars.AGENT_SCRIPT_DOWNLOAD_PATH = $agent_download_path | .vars.PROXY_SECRET = $proxy_secret | .vars.FPJS_INGRESS_BASE_HOST = $fpjs_ingress_base_host' \
             e2e-deploy/wrangler.json > e2e-deploy/wrangler.json.tmp && mv e2e-deploy/wrangler.json.tmp e2e-deploy/wrangler.json
 
       - name: Set compatibility date

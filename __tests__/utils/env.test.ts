@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Defaults, WorkerEnv, getCdnUrl, getIngressBaseHost, getIntegrationPathDepth } from '../../src/env'
-
-describe('getCdnUrl', () => {
-  it('uses default when empty string configured', () => {
-    expect(getCdnUrl({ ...Defaults, FPJS_CDN_URL: '' })).toBe(Defaults.FPJS_CDN_URL)
-  })
-})
+import { Defaults, WorkerEnv, getIngressBaseHost, getIntegrationPathDepth } from '../../src/env'
 
 describe('getIngressBaseHost', () => {
   it('uses default when empty string configured', () => {
