@@ -1,5 +1,11 @@
 # Fingerprint Cloudflare Worker Proxy Integration
 
+## 1.7.0-rc.1
+
+### Patch Changes
+
+- Add support for INTEGRATION_PATH_DEPTH environment variable ([6b07e25](https://github.com/fingerprintjs/cloudflare-worker-proxy/commit/6b07e25319506a6219ac2ba28dc745a43e26164c))
+
 ## 1.7.0-rc.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@fingerprint/cloudflare-worker-proxy",
-  "version": "1.7.0-rc.0",
+  "version": "1.7.0-rc.1",
   "description": "FingerprintJS Pro Cloudflare Worker",
   "author": "FingerprintJS, Inc (https://fingerprintjs.com)",
   "license": "MIT",
