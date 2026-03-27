@@ -15,6 +15,10 @@ jobs:
 
   build-and-deploy-and-test-e2e-mock:
     runs-on: ubuntu-24.04
+    strategy:
+      max-parallel: 1
+      matrix:
+        pseudo_ipv4: ["off", "add_header", "overwrite_header"]
     name: Build & Deploy & Test e2e using mock app
     strategy:
       max-parallel: 1
@@ -103,6 +107,12 @@ jobs:
         with:
           path: 'package.json'
           prop_path: 'version'
+      - name: Update Cloudflare Pseudo IPv4 to ${{ matrix.pseudo_ipv4 }}
+        run: |
+          curl -X PATCH "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/settings/pseudo_ipv4" \
+               -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               --data "{\"value\":\"${{ matrix.pseudo_ipv4 }}\"}"
       - name: Wait for some time for the worker to come online
         run: sleep 180
         shell: bash
@@ -119,6 +129,12 @@ jobs:
       - name: Clean up worker
         run: |
           curl -i -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{secrets.CF_ACCOUNT_ID}}/workers/scripts/${{steps.random-path-generator.outputs.WORKER_NAME}}" -H"Authorization: bearer ${{secrets.CF_API_TOKEN}}"
+      - name: Reset Cloudflare Pseudo IPv4 to off
+        run: |
+          curl -X PATCH "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/settings/pseudo_ipv4" \
+               -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               --data '{"value":"off"}'
 
   build-and-deploy-and-test-e2e:
     runs-on: ubuntu-24.04
