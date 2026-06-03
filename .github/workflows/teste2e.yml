@@ -208,12 +208,15 @@ jobs:
         with:
           path: 'package.json'
           prop_path: 'version'
-      - name: Install playwright dependencies
-        run: DEBUG=pw:install pnpm exec playwright install chromium --with-deps
+      - name: Install Playwright dependencies
+        run: DEBUG=pw:install npx playwright install chromium --with-deps
         timeout-minutes: 10
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/pw-browsers
       - name: Run test
         run: pnpm test:e2e
         env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/pw-browsers
           test_client_domain: ${{secrets.TEST_CLIENT_DOMAIN}}
           worker_version: ${{steps.version.outputs.prop}}
           worker_path: ${{steps.random-path-generator.outputs.WORKER_PATH}}
