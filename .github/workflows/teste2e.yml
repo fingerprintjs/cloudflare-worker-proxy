@@ -209,7 +209,8 @@ jobs:
           path: 'package.json'
           prop_path: 'version'
       - name: Install playwright dependencies
-        run: pnpm exec playwright install
+        run: DEBUG=pw:install pnpm exec playwright install chromium --with-deps
+        timeout-minutes: 10
       - name: Run test
         run: pnpm test:e2e
         env:
