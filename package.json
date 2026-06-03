@@ -52,7 +52,7 @@
     "@fingerprintjs/eslint-config-dx-team": "^0.2.0",
     "@fingerprintjs/prettier-config-dx-team": "^0.3.0",
     "@fingerprintjs/tsconfig-dx-team": "^0.0.2",
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^24.12.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
