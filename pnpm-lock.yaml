@@ -40,8 +40,8 @@ importers:
         specifier: ^0.0.2
         version: 0.0.2
       '@playwright/test':
-        specifier: ^1.58.2
-        version: 1.58.2
+        specifier: ^1.60.0
+        version: 1.60.0
       '@types/node':
         specifier: ^24.12.0
         version: 24.12.0
@@ -786,8 +786,8 @@ packages:
     deprecated: Please update to the latest version of Playwright to test up-to-date browsers.
     hasBin: true
 
-  '@playwright/test@1.58.2':
-    resolution: {integrity: sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==}
+  '@playwright/test@1.60.0':
+    resolution: {integrity: sha512-O71yZIbAh/PxDMNGns37GHBIfrVkEVyn+AXyIa5dOTfb4/xNvRWV+Vv/NMbNCtODB/pO7vLlF2OTmMVLhmr7Ag==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -2408,8 +2408,8 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  playwright-core@1.58.2:
-    resolution: {integrity: sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==}
+  playwright-core@1.60.0:
+    resolution: {integrity: sha512-9bW6zvX/m0lEbgTKJ6YppOKx8H3VOPBMOCFh2irXFOT4BbHgrx5hPjwJYLT40Lu+4qtD36qKc/Hn56StUW57IA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -2418,8 +2418,8 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  playwright@1.58.2:
-    resolution: {integrity: sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==}
+  playwright@1.60.0:
+    resolution: {integrity: sha512-hheHdokM8cdqCb0lcE3s+zT4t4W+vvjpGxsZlDnikarzx8tSzMebh3UiFtgqwFwnTnjYQcsyMF8ei2mCO/tpeA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -3804,9 +3804,9 @@ snapshots:
     dependencies:
       playwright: 1.43.0
 
-  '@playwright/test@1.58.2':
+  '@playwright/test@1.60.0':
     dependencies:
-      playwright: 1.58.2
+      playwright: 1.60.0
 
   '@poppinss/colors@4.1.6':
     dependencies:
@@ -5436,7 +5436,7 @@ snapshots:
 
   playwright-core@1.43.0: {}
 
-  playwright-core@1.58.2: {}
+  playwright-core@1.60.0: {}
 
   playwright@1.43.0:
     dependencies:
@@ -5444,9 +5444,9 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
-  playwright@1.58.2:
+  playwright@1.60.0:
     dependencies:
-      playwright-core: 1.58.2
+      playwright-core: 1.60.0
     optionalDependencies:
       fsevents: 2.3.2
 
