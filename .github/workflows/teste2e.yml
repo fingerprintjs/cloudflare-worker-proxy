@@ -149,6 +149,8 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Create the worker script and wrangler.json
         run: |
@@ -213,6 +215,7 @@ jobs:
         timeout-minutes: 10
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/pw-browsers
+          TMPDIR: ${{ github.workspace }}/tmp
       - name: Run test
         run: pnpm test:e2e
         env:
