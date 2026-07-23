@@ -22,6 +22,9 @@ const testCases: [string, URL][] = [
 
 const workerDomain = process.env.test_client_domain
 
+// How long to wait for the result element to render and populate with valid JSON.
+const RESULT_TIMEOUT_MS = 30000
+
 interface GetResult {
   requestId: string
   visitorId: string
@@ -95,11 +98,16 @@ test.describe('visitorId', () => {
   }
 
   async function testForElement(locator: Locator) {
-    await expect(locator).toBeVisible()
-
+    // Fold the visibility check into the poll so the whole wait shares a single
+    // timeout budget instead of stacking a separate (short) visibility timeout
+    // in front of it.
     await expect
       .poll(
         async () => {
+          if (!(await locator.isVisible())) {
+            return false
+          }
+
           const textContent = await locator.textContent()
           if (typeof textContent !== 'string' || textContent.trim() === '') {
             return false
@@ -117,8 +125,8 @@ test.describe('visitorId', () => {
           }
         },
         {
-          message: `Expected ${await locator.evaluate((el) => el.outerHTML)} to contain a valid visitor result`,
-          timeout: 30000,
+          message: 'Expected the result element to contain a valid visitor result',
+          timeout: RESULT_TIMEOUT_MS,
         }
       )
       .toBe(true)
@@ -130,8 +138,12 @@ test.describe('visitorId', () => {
       waitUntil: 'networkidle',
     })
 
-    await testForElement(page.locator('#result > code'))
-    await testForElement(page.locator('#cdn-result > code'))
+    // Wait for both result blocks concurrently so the total wait is capped at a
+    // single RESULT_TIMEOUT_MS budget rather than the sum of both.
+    await Promise.all([
+      testForElement(page.locator('#result > code')),
+      testForElement(page.locator('#cdn-result > code')),
+    ])
   }
 
   for (const [name, url] of testCases) {
