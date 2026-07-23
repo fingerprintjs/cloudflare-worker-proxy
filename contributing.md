@@ -110,7 +110,7 @@ See the [Cloudflare documentation for compatibility dates](https://developers.cl
 
 ### How to release a new version
 
-We use [changesets](https://github.com/changesets/changesets) for handling release notes. If there are relevant changes, please add them to changeset via `pnpm exec changeset`. You need to run `pnpm install` before doing so.
+We use [changesets](https://github.com/changesets/changesets) for handling release notes. If there are relevant changes, please add a changeset via `pnpm exec changeset` (run `pnpm install` first).
 
 ### How to keep your worker up-to-date
 
