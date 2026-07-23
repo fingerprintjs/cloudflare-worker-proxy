@@ -23,17 +23,17 @@ jobs:
           - true
           - false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.node-version'
 
       - name: Install pnpm
-        uses: pnpm/action-setup@129abb77bf5884e578fcaf1f37628e41622cc371
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9
 
@@ -47,8 +47,9 @@ jobs:
       - name: Create the worker script and wrangler.json
         run: |
           pnpm build
-          # Remove local wrangler state after build
-          rm -rf .wrangler
+      
+      - name: Remove local wrangler state
+        run: rm -rf .wrangler
 
       - name: Set up the deploy directory
         run: |
@@ -56,13 +57,13 @@ jobs:
           cp dist/*/index.js dist/*/wrangler.json e2e-deploy
 
       - name: Generate random paths
+        id: random-path-generator
         run: |
           postfix="$(date +%s)-mock-e2e"
           echo WORKER_NAME=automated-test-$postfix >> $GITHUB_OUTPUT
           echo WORKER_PATH=fpjs-worker-$postfix >> $GITHUB_OUTPUT
           echo GET_RESULT_PATH=get-result-$postfix >> $GITHUB_OUTPUT
           echo AGENT_DOWNLOAD_PATH=agent-download-$postfix >> $GITHUB_OUTPUT
-        id: random-path-generator
 
       - name: Set variables for e2e tests in wrangler.json
         run: |
@@ -90,21 +91,21 @@ jobs:
         run: echo version=$(pnpm ls --json wrangler | jq -r '.[0].devDependencies.wrangler.version') >> $GITHUB_OUTPUT
 
       - name: Publish
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           wranglerVersion: ${{ steps.wrangler-version.outputs.version }}
           workingDirectory: e2e-deploy
+      
       - name: Get version
         id: version
-        uses: notiz-dev/github-action-json-property@a5a9c668b16513c737c3e1f8956772c99c73f6e8 # commit hash = v0.2.0
-        with:
-          path: 'package.json'
-          prop_path: 'version'
+        run: echo "prop=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+      
       - name: Wait for some time for the worker to come online
         run: sleep 180
         shell: bash
+      
       - name: Run test
         run: |
           npm exec -y "git+https://github.com/fingerprintjs/dx-team-mock-for-proxy-integrations-e2e-tests.git" -- --api-url="${{env.api_url}}" --integration-url="https://${{env.test_client_domain}}/${{env.worker_path}}/" --cdn-path="${{env.agent_download_path}}" --ingress-path="${{env.get_result_path}}" --traffic-name="fingerprintjs-pro-cloudflare" --integration-version="${{steps.version.outputs.prop}}" --enable-new-tests=true
@@ -115,6 +116,7 @@ jobs:
           get_result_path: ${{ steps.random-path-generator.outputs.GET_RESULT_PATH }}
           agent_download_path: ${{ steps.random-path-generator.outputs.AGENT_DOWNLOAD_PATH }}
           api_url: https://${{ secrets.MOCK_FPCDN }}
+      
       - name: Clean up worker
         run: |
           curl -i -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{secrets.CF_ACCOUNT_ID}}/workers/scripts/${{steps.random-path-generator.outputs.WORKER_NAME}}" -H"Authorization: bearer ${{secrets.CF_API_TOKEN}}"
@@ -129,17 +131,17 @@ jobs:
           - true
           - false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.node-version'
 
       - name: Install pnpm
-        uses: pnpm/action-setup@129abb77bf5884e578fcaf1f37628e41622cc371
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9
 
@@ -153,8 +155,9 @@ jobs:
       - name: Create the worker script and wrangler.json
         run: |
           pnpm build
-          # Remove local wrangler state after build
-          rm -rf .wrangler
+
+      - name: Remove local wrangler state
+        run: rm -rf .wrangler
 
       - name: Set up the deploy directory
         run: |
@@ -162,13 +165,13 @@ jobs:
           cp dist/*/index.js dist/*/wrangler.json e2e-deploy
 
       - name: Generate random paths
+        id: random-path-generator
         run: |
           postfix="$(date +%s)-e2e"
           echo WORKER_NAME=automated-test-$postfix >> $GITHUB_OUTPUT
           echo WORKER_PATH=fpjs-worker-$postfix >> $GITHUB_OUTPUT
           echo GET_RESULT_PATH=get-result-$postfix >> $GITHUB_OUTPUT
           echo AGENT_DOWNLOAD_PATH=agent-download-$postfix >> $GITHUB_OUTPUT
-        id: random-path-generator
 
       - name: Set variables for e2e tests in wrangler.json
         run: |
@@ -195,7 +198,7 @@ jobs:
         run: echo version=$(pnpm ls --json wrangler | jq -r '.[0].devDependencies.wrangler.version') >> $GITHUB_OUTPUT
 
       - name: Publish
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
@@ -204,12 +207,11 @@ jobs:
 
       - name: Get version
         id: version
-        uses: notiz-dev/github-action-json-property@a5a9c668b16513c737c3e1f8956772c99c73f6e8 # commit hash = v0.2.0
-        with:
-          path: 'package.json'
-          prop_path: 'version'
+        run: echo "prop=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+      
       - name: Install playwright dependencies
         run: pnpm exec playwright install
+      
       - name: Run test
         run: pnpm test:e2e
         env:
@@ -218,6 +220,7 @@ jobs:
           worker_path: ${{steps.random-path-generator.outputs.WORKER_PATH}}
           get_result_path: ${{ steps.random-path-generator.outputs.GET_RESULT_PATH }}
           agent_download_path: ${{ steps.random-path-generator.outputs.AGENT_DOWNLOAD_PATH }}
+      
       - name: Clean up worker
         run: |
           curl -i -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{secrets.CF_ACCOUNT_ID}}/workers/scripts/${{steps.random-path-generator.outputs.WORKER_NAME}}" -H"Authorization: bearer ${{secrets.CF_API_TOKEN}}"
