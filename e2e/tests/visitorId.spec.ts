@@ -57,7 +57,7 @@ test.describe('visitorId', () => {
           }
         }
       }
-    } catch (e) {
+    } catch {
       // do nothing
     }
 
@@ -72,13 +72,13 @@ test.describe('visitorId', () => {
 
   async function testForElement(el: ElementHandle<SVGElement | HTMLElement>) {
     const textContent = await el.textContent()
-    expect(textContent != null).toStrictEqual(true)
+    expect(textContent !== null).toStrictEqual(true)
     assert(typeof textContent === 'string')
 
     let jsonContent: Result | undefined
     try {
       jsonContent = JSON.parse(textContent)
-    } catch (e) {
+    } catch {
       // do nothing
     }
     assert(jsonContent)

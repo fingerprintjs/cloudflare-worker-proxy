@@ -3,7 +3,7 @@ export interface FPJSResponse {
   notifications?: Notification[]
   requestId: string
   error?: ErrorData
-  products: {}
+  products: Record<string, never>
 }
 
 export interface Notification {
@@ -19,7 +19,7 @@ export interface ErrorData {
 function errorToString(error: string | Error | unknown): string {
   try {
     return typeof error === 'string' ? error : error instanceof Error ? error.message : String(error)
-  } catch (e) {
+  } catch {
     return 'unknown'
   }
 }

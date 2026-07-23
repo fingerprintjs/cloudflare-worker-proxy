@@ -609,7 +609,7 @@ describe('GET req response when failure', () => {
     const response = await worker.fetch(req, workerEnv)
     expect(response.headers.get('content-type')).toBe('application/json')
     expect(response.status).toBe(500)
-    const responseBody = await response.json<any>()
+    const responseBody = await response.json<Record<string, unknown>>()
     // Note: toStrictEqual does not work for some reason, using double toMatchObject instead
     expect(responseBody).toMatchObject({ error: 'some error' })
     expect({ error: 'some error' }).toMatchObject(responseBody)

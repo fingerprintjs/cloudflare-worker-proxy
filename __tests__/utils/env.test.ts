@@ -34,7 +34,7 @@ describe('getIntegrationPathDepth', () => {
     expect(getIntegrationPathDepth(env)).toBe(Defaults.INTEGRATION_PATH_DEPTH)
   })
 
-  it.each([null, -1, NaN, +Infinity, -Infinity, -0, 0.1, '', 'abc', '1.5'])(
+  it.each([null, -1, NaN, Infinity, -Infinity, -0, 0.1, '', 'abc', '1.5'])(
     'returns the default for an invalid INTEGRATION_PATH_DEPTH - %s',
     (input) => {
       expect(getIntegrationPathDepth(makeEnv(input))).toBe(Defaults.INTEGRATION_PATH_DEPTH)

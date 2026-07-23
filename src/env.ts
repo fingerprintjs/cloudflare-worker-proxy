@@ -27,7 +27,7 @@ function getVarOrDefault<K extends keyof WorkerEnv>(
 
 function isVarSet(variable: keyof WorkerEnv): (env: WorkerEnv) => boolean {
   return function (env: WorkerEnv): boolean {
-    return !!env[variable]
+    return Boolean(env[variable])
   }
 }
 
@@ -78,7 +78,7 @@ function isNonNegativeInteger(value: number): boolean {
 
 export function envHasValidIntegrationPathDepth(env: WorkerEnv) {
   const integrationPathDepth = normalizeIntegrationPathDepth(env)
-  if (integrationPathDepth == null) {
+  if (integrationPathDepth === null) {
     return true
   }
   return isNonNegativeInteger(integrationPathDepth)
