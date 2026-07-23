@@ -25,42 +25,20 @@ const workerDomain = process.env.test_client_domain
 // How long to wait for the result element to render and populate with valid JSON.
 const RESULT_TIMEOUT_MS = 30000
 
-interface GetResult {
-  requestId: string
-  visitorId: string
-  visitorFound: boolean
-}
-
-interface V4GetResult {
-  event_id: string
-  visitor_id: string
-}
-
-type Result = GetResult | V4GetResult
-
-function hasStringProperty(value: unknown, key: string): boolean {
-  return typeof value === 'object' && value !== null && key in value && typeof Reflect.get(value, key) === 'string'
-}
-
-function isResult(value: unknown): value is Result {
-  return (
-    (hasStringProperty(value, 'event_id') && hasStringProperty(value, 'visitor_id')) ||
-    (hasStringProperty(value, 'requestId') && hasStringProperty(value, 'visitorId'))
-  )
-}
-
-function getResultIds(jsonContent: Result): { visitorId: string; requestId: string } {
-  if ('event_id' in jsonContent) {
-    return {
-      visitorId: jsonContent.visitor_id,
-      requestId: jsonContent.event_id,
-    }
+// The result block renders JSON as either v3 { visitorId, requestId } or
+// v4 { visitor_id, event_id }. We only need it to eventually expose a well-formed
+// id pair; areVisitorIdAndRequestIdValid rejects anything missing or malformed.
+function hasValidResult(text: string): boolean {
+  let json: Record<string, string>
+  try {
+    json = JSON.parse(text)
+  } catch {
+    return false
   }
-
-  return {
-    visitorId: jsonContent.visitorId,
-    requestId: jsonContent.requestId,
+  if (typeof json !== 'object' || json === null) {
+    return false
   }
+  return areVisitorIdAndRequestIdValid(json.visitorId ?? json.visitor_id, json.requestId ?? json.event_id)
 }
 
 test.describe('visitorId', () => {
@@ -98,37 +76,13 @@ test.describe('visitorId', () => {
   }
 
   async function testForElement(locator: Locator) {
-    // Fold the visibility check into the poll so the whole wait shares a single
-    // timeout budget instead of stacking a separate (short) visibility timeout
-    // in front of it.
+    // Poll until the element is visible and its JSON exposes a valid id pair, so
+    // rendering and content population share one timeout budget.
     await expect
-      .poll(
-        async () => {
-          if (!(await locator.isVisible())) {
-            return false
-          }
-
-          const textContent = await locator.textContent()
-          if (typeof textContent !== 'string' || textContent.trim() === '') {
-            return false
-          }
-
-          try {
-            const jsonContent = JSON.parse(textContent)
-            if (!isResult(jsonContent)) {
-              return false
-            }
-            const { visitorId, requestId } = getResultIds(jsonContent)
-            return areVisitorIdAndRequestIdValid(visitorId, requestId)
-          } catch {
-            return false
-          }
-        },
-        {
-          message: 'Expected the result element to contain a valid visitor result',
-          timeout: RESULT_TIMEOUT_MS,
-        }
-      )
+      .poll(async () => (await locator.isVisible()) && hasValidResult((await locator.textContent()) ?? ''), {
+        message: 'Expected the result element to contain a valid visitor result',
+        timeout: RESULT_TIMEOUT_MS,
+      })
       .toBe(true)
   }
 
