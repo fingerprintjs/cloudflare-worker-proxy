@@ -1,6 +1,5 @@
-import { test, expect, Page, request, APIRequestContext, ElementHandle } from '@playwright/test'
+import { test, expect, Page, request, APIRequestContext, Locator } from '@playwright/test'
 import { areVisitorIdAndRequestIdValid, wait } from '../utils'
-import assert from 'node:assert'
 
 const INT_VERSION = process.env.worker_version || ''
 const WORKER_PATH = process.env.worker_path || 'fpjs-worker-default'
@@ -23,18 +22,24 @@ const testCases: [string, URL][] = [
 
 const workerDomain = process.env.test_client_domain
 
-interface GetResult {
-  requestId: string
-  visitorId: string
-  visitorFound: boolean
-}
+// How long to wait for the result element to render and populate with valid JSON.
+const RESULT_TIMEOUT_MS = 30000
 
-interface V4GetResult {
-  event_id: string
-  visitor_id: string
+// The result block renders JSON as either v3 { visitorId, requestId } or
+// v4 { visitor_id, event_id }. We only need it to eventually expose a well-formed
+// id pair; areVisitorIdAndRequestIdValid rejects anything missing or malformed.
+function hasValidResult(text: string): boolean {
+  let json: Record<string, string>
+  try {
+    json = JSON.parse(text)
+  } catch {
+    return false
+  }
+  if (typeof json !== 'object' || json === null) {
+    return false
+  }
+  return areVisitorIdAndRequestIdValid(json.visitorId ?? json.visitor_id, json.requestId ?? json.event_id)
 }
-
-type Result = GetResult | V4GetResult
 
 test.describe('visitorId', () => {
   async function waitUntilOnline(
@@ -70,29 +75,15 @@ test.describe('visitorId', () => {
     return waitUntilOnline(reqContext, expectedVersion, newRetryCounter, maxRetries)
   }
 
-  async function testForElement(el: ElementHandle<SVGElement | HTMLElement>) {
-    const textContent = await el.textContent()
-    expect(textContent != null).toStrictEqual(true)
-    assert(typeof textContent === 'string')
-
-    let jsonContent: Result | undefined
-    try {
-      jsonContent = JSON.parse(textContent)
-    } catch (e) {
-      // do nothing
-    }
-    assert(jsonContent)
-
-    let visitorId = ''
-    let requestId = ''
-    if ('event_id' in jsonContent) {
-      visitorId = jsonContent.visitor_id
-      requestId = jsonContent.event_id
-    } else if ('requestId' in jsonContent) {
-      visitorId = jsonContent.visitorId
-      requestId = jsonContent.requestId
-    }
-    expect(areVisitorIdAndRequestIdValid(visitorId, requestId)).toStrictEqual(true)
+  async function testForElement(locator: Locator) {
+    // Poll until the element is visible and its JSON exposes a valid id pair, so
+    // rendering and content population share one timeout budget.
+    await expect
+      .poll(async () => (await locator.isVisible()) && hasValidResult((await locator.textContent()) ?? ''), {
+        message: 'Expected the result element to contain a valid visitor result',
+        timeout: RESULT_TIMEOUT_MS,
+      })
+      .toBe(true)
   }
 
   async function runTest(page: Page, url: string) {
@@ -101,9 +92,12 @@ test.describe('visitorId', () => {
       waitUntil: 'networkidle',
     })
 
-    await wait(5000)
-    await page.waitForSelector('#result > code').then(testForElement)
-    await page.waitForSelector('#cdn-result > code').then(testForElement)
+    // Wait for both result blocks concurrently so the total wait is capped at a
+    // single RESULT_TIMEOUT_MS budget rather than the sum of both.
+    await Promise.all([
+      testForElement(page.locator('#result > code')),
+      testForElement(page.locator('#cdn-result > code')),
+    ])
   }
 
   for (const [name, url] of testCases) {
