@@ -9,7 +9,7 @@
 
 ## Working with code
 
-We prefer using [pnpm](https://pnpm.io/) for installing dependencies and running scripts. `pnpm` version 9.x is required. If you have `corepack` installed, the exact version of `pnpm` used by this repository can be installed with `corepack install`.
+We prefer using [pnpm](https://pnpm.io/) for installing dependencies and running scripts. `pnpm` version 11.x is required. If you have `corepack` installed, the exact version of `pnpm` used by this repository can be installed with `corepack install`.
 
 The `main` is locked for the push action. 
 

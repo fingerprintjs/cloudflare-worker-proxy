@@ -37,7 +37,7 @@ jobs:
 
       - name: Upgrade version
         run: |
-          pnpm version prerelease --preid snapshot --no-commit-hooks --no-git-tag-version --ignore-scripts
+          pnpm version prerelease --preid snapshot --no-commit-hooks --no-git-tag-version
 
       - name: Install dependencies
         run: pnpm install
@@ -143,7 +143,7 @@ jobs:
 
       - name: Upgrade version
         run: |
-          pnpm version prerelease --preid snapshot --no-commit-hooks --no-git-tag-version --ignore-scripts
+          pnpm version prerelease --preid snapshot --no-commit-hooks --no-git-tag-version
 
       - name: Install dependencies
         run: pnpm install
