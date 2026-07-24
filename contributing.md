@@ -90,7 +90,7 @@ End-to-end tests are located in the `e2e` folder and run by [playwright](https:/
 The `teste2e.yml` workflow is responsible for deploying a new Cloudflare worker, running end-to-end tests, and cleaning up the worker in the end. `teste2e.yml` works like this:
 1. Check out the current branch (can be any branch).
 2. Bump version according to the input, default to `patch`.
-3. Generate environment variables, such as `WORKER_NAME` and `GET_RESULT_PATH`. Put them inside `wrangler.jsonc`.
+3. Generate environment variables, such as `WORKER_NAME` and `GET_RESULT_PATH`. Put them inside `e2e-deploy/wrangler.json`.
 4. Publish the worker using `cloudflare/wrangler-action` to the designated Cloudflare account.
 5. Install `playwright`.
 6. Run `pnpm test:e2e` with env variables `test_client_domain`, `worker_version`, `worker_path`, `get_result_path`, and `agent_download_path`.
@@ -110,7 +110,7 @@ See the [Cloudflare documentation for compatibility dates](https://developers.cl
 
 ### How to release a new version
 
-We use [changesets](https://github.com/changesets/changesets) for handling release notes. If there are relevant changes, please add them to changeset via `pnpm exec changeset`. You need to run `pnpm install` before doing so.
+We use [changesets](https://github.com/changesets/changesets) for handling release notes. If there are relevant changes, please add a changeset via `pnpm exec changeset` (run `pnpm install` first).
 
 ### How to keep your worker up-to-date
 
