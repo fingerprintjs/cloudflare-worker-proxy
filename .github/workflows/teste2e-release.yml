@@ -18,17 +18,15 @@ jobs:
     runs-on: ubuntu-24.04
     name: Test release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.node-version'
 
       - name: Install pnpm
-        uses: pnpm/action-setup@129abb77bf5884e578fcaf1f37628e41622cc371
-        with:
-          version: 9
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
       - name: Install dependencies
         run: pnpm install
@@ -41,8 +39,9 @@ jobs:
       - name: Create the worker script and wrangler.json
         run: |
           pnpm build
-          # Remove local wrangler state after build
-          rm -rf .wrangler
+
+      - name: Remove local wrangler state
+        run: rm -rf .wrangler
 
       - name: Set up the deploy directory
         run: |
@@ -77,7 +76,7 @@ jobs:
         run: echo version=$(pnpm ls --json wrangler | jq -r '.[0].devDependencies.wrangler.version') >> $GITHUB_OUTPUT
 
       - name: Publish
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
@@ -86,12 +85,11 @@ jobs:
 
       - name: Get version
         id: version
-        uses: notiz-dev/github-action-json-property@a5a9c668b16513c737c3e1f8956772c99c73f6e8 # commit hash = v0.2.0
-        with:
-          path: 'package.json'
-          prop_path: 'version'
+        run: echo "prop=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+
       - name: Install dependencies
         run: pnpm exec playwright install
+
       - name: Run test
         run:  pnpm test:e2e
         env:
@@ -100,15 +98,7 @@ jobs:
           worker_path: ${{steps.random-path-generator.outputs.WORKER_PATH}}
           get_result_path: ${{ steps.random-path-generator.outputs.GET_RESULT_PATH }}
           agent_download_path: ${{ steps.random-path-generator.outputs.AGENT_DOWNLOAD_PATH }}
+
       - name: Clean up worker
         run: |
           curl -i -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{secrets.CF_ACCOUNT_ID}}/workers/scripts/${{steps.random-path-generator.outputs.WORKER_NAME}}" -H"Authorization: bearer ${{secrets.CF_API_TOKEN}}"
-
-      - name: Report Status
-        if: always()
-        uses: ravsamhq/notify-slack-action@0d9c6ff1de9903da88d24c0564f6e83cb28faca9
-        with:
-          status: ${{ job.status }}
-          notification_title: "Cloudflare Worker E2E Release Test has {status_message}"
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

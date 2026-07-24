@@ -1,9 +1,11 @@
 name: Lint, build and test
+
 on:
   push:
     branches:
       - main
   pull_request:
+
 jobs:
   build-and-check:
     name: Build project and run CI checks
@@ -14,13 +16,11 @@ jobs:
     name: Check types
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@129abb77bf5884e578fcaf1f37628e41622cc371
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/setup-node@v7
         with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
+          node-version-file: '.node-version'
           cache: pnpm
       - run: pnpm install
       - run: pnpm typecheck
