@@ -3,7 +3,7 @@
 ## Requirements
 
 - Node 24 (for development; the published package supports Node >=16 as specified in `package.json`)
-- Typescript 5+
+- Typescript 6+
 - Playwright
 - [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) v4+
 
