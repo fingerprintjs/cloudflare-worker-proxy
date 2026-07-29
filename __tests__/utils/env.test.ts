@@ -1,9 +1,24 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { Defaults, WorkerEnv, getIngressBaseHost, getIntegrationPathDepth } from '../../src/env'
 
 describe('getIngressBaseHost', () => {
   it('uses default when empty string configured', () => {
     expect(getIngressBaseHost({ ...Defaults, FPJS_INGRESS_BASE_HOST: '' })).toBe(Defaults.FPJS_INGRESS_BASE_HOST)
+  })
+
+  it('throws when no value is set and no default is available', async () => {
+    vi.resetModules()
+    vi.doMock('../../src/config', () => ({ config: { ingressApi: null } }))
+    const { getIngressBaseHost: getIngressBaseHostNoDefault, Defaults: DefaultsNoDefault } = await import(
+      '../../src/env'
+    )
+
+    expect(() => getIngressBaseHostNoDefault({ ...DefaultsNoDefault, FPJS_INGRESS_BASE_HOST: null })).toThrow(
+      'FPJS_INGRESS_BASE_HOST is not set and no default is available'
+    )
+
+    vi.doUnmock('../../src/config')
+    vi.resetModules()
   })
 })
 
