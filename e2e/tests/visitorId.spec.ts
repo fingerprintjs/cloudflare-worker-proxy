@@ -29,6 +29,9 @@ const RESULT_TIMEOUT_MS = 15000
 // How many times to reload the page before failing.
 const MAX_PAGE_ATTEMPTS = 3
 
+// How often to re-check the result blocks while waiting within a single page load.
+const RESULT_POLL_INTERVAL_MS = 500
+
 // The result block renders JSON as either v3 { visitorId, requestId } or
 // v4 { visitor_id, event_id }. We only need it to eventually expose a well-formed
 // id pair; areVisitorIdAndRequestIdValid rejects anything missing or malformed.
@@ -83,20 +86,19 @@ test.describe('visitorId', () => {
     return (await locator.isVisible()) && hasValidResult((await locator.textContent()) ?? '')
   }
 
+  // Poll both result blocks until they hold a valid id pair or the timeout elapses.
   async function waitForResults(page: Page, timeout: number): Promise<boolean> {
-    try {
-      await expect
-        .poll(
-          async () =>
-            (await elementHasValidResult(page.locator('#result > code'))) &&
-            (await elementHasValidResult(page.locator('#cdn-result > code'))),
-          { timeout }
-        )
-        .toBe(true)
-      return true
-    } catch {
-      return false
-    }
+    const deadline = Date.now() + timeout
+    do {
+      if (
+        (await elementHasValidResult(page.locator('#result > code'))) &&
+        (await elementHasValidResult(page.locator('#cdn-result > code')))
+      ) {
+        return true
+      }
+      await wait(RESULT_POLL_INTERVAL_MS)
+    } while (Date.now() < deadline)
+    return false
   }
 
   async function runTest(page: Page, url: string) {
