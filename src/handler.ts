@@ -43,8 +43,7 @@ function copySearchParams(oldURL: URL, newURL: URL): void {
 }
 
 function createIngressRequestURL(env: WorkerEnv, receivedRequestURL: URL, targetPath: string) {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- always has a default value from config
-  const ingressBaseUrl = getIngressBaseHost(env)!
+  const ingressBaseUrl = getIngressBaseHost(env)
 
   const endpoint = getIngressEndpoint(ingressBaseUrl, receivedRequestURL.searchParams, targetPath)
   const newURL = new URL(endpoint)
@@ -54,8 +53,7 @@ function createIngressRequestURL(env: WorkerEnv, receivedRequestURL: URL, target
 }
 
 function createAgentScriptURL(env: WorkerEnv, receivedRequestURL: URL) {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- always has a default value from config
-  const ingressBaseUrl = getIngressBaseHost(env)!
+  const ingressBaseUrl = getIngressBaseHost(env)
 
   // In V4, the Indentification API (Ingress) host also works as a proxy for the JavaScript agent CDN
   // that's why we are passing it here

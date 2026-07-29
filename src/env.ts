@@ -31,7 +31,15 @@ function isVarSet(variable: keyof WorkerEnv): (env: WorkerEnv) => boolean {
   }
 }
 
-export const getIngressBaseHost = getVarOrDefault('FPJS_INGRESS_BASE_HOST', Defaults)
+const getIngressBaseHostVar = getVarOrDefault('FPJS_INGRESS_BASE_HOST', Defaults)
+
+export function getIngressBaseHost(env: WorkerEnv): string {
+  const ingressBaseHost = getIngressBaseHostVar(env)
+  if (ingressBaseHost === null) {
+    throw new Error('FPJS_INGRESS_BASE_HOST is not set and no default is available')
+  }
+  return ingressBaseHost
+}
 
 export const agentScriptDownloadPathVarName = 'AGENT_SCRIPT_DOWNLOAD_PATH'
 const getAgentPathVar = getVarOrDefault(agentScriptDownloadPathVarName, Defaults)
