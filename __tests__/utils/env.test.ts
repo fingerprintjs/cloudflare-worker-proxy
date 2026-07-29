@@ -9,9 +9,8 @@ describe('getIngressBaseHost', () => {
   it('throws when no value is set and no default is available', async () => {
     vi.resetModules()
     vi.doMock('../../src/config', () => ({ config: { ingressApi: null } }))
-    const { getIngressBaseHost: getIngressBaseHostNoDefault, Defaults: DefaultsNoDefault } = await import(
-      '../../src/env'
-    )
+    const { getIngressBaseHost: getIngressBaseHostNoDefault, Defaults: DefaultsNoDefault } =
+      await import('../../src/env')
 
     expect(() => getIngressBaseHostNoDefault({ ...DefaultsNoDefault, FPJS_INGRESS_BASE_HOST: null })).toThrow(
       'FPJS_INGRESS_BASE_HOST is not set and no default is available'
