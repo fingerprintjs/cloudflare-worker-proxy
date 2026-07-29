@@ -27,11 +27,19 @@ function getVarOrDefault<K extends keyof WorkerEnv>(
 
 function isVarSet(variable: keyof WorkerEnv): (env: WorkerEnv) => boolean {
   return function (env: WorkerEnv): boolean {
-    return !!env[variable]
+    return Boolean(env[variable])
   }
 }
 
-export const getIngressBaseHost = getVarOrDefault('FPJS_INGRESS_BASE_HOST', Defaults)
+const getIngressBaseHostVar = getVarOrDefault('FPJS_INGRESS_BASE_HOST', Defaults)
+
+export function getIngressBaseHost(env: WorkerEnv): string {
+  const ingressBaseHost = getIngressBaseHostVar(env)
+  if (ingressBaseHost === null) {
+    throw new Error('FPJS_INGRESS_BASE_HOST is not set and no default is available')
+  }
+  return ingressBaseHost
+}
 
 export const agentScriptDownloadPathVarName = 'AGENT_SCRIPT_DOWNLOAD_PATH'
 const getAgentPathVar = getVarOrDefault(agentScriptDownloadPathVarName, Defaults)
@@ -78,7 +86,7 @@ function isNonNegativeInteger(value: number): boolean {
 
 export function envHasValidIntegrationPathDepth(env: WorkerEnv) {
   const integrationPathDepth = normalizeIntegrationPathDepth(env)
-  if (integrationPathDepth == null) {
+  if (integrationPathDepth === null) {
     return true
   }
   return isNonNegativeInteger(integrationPathDepth)

@@ -11,12 +11,12 @@ describe('createErrorResponseForIngress', () => {
   })
   test('response body is as expected', async () => {
     expect(response.body).not.toBeNull()
-    if (response.body == null) {
+    if (response.body === null) {
       return
     }
     const bodyReader = response.body.getReader()
     await bodyReader.read().then((body) => {
-      if (body.value == null) {
+      if (body.value === undefined) {
         return
       }
       const bodyString = Array.from<number>(body.value)
@@ -48,12 +48,12 @@ describe('createErrorResponseForIngress', () => {
     const reqWithNoOrigin = new Request('https://example.com')
     const errorReason = new Error('some error message')
     const response = createErrorResponseForIngress(reqWithNoOrigin, errorReason)
-    if (response.body == null) {
+    if (response.body === null) {
       return
     }
     const bodyReader = response.body.getReader()
     await bodyReader.read().then((body) => {
-      if (body.value == null) {
+      if (body.value === undefined) {
         return
       }
       const bodyString = Array.from<number>(body.value)
@@ -69,12 +69,12 @@ describe('createErrorResponseForIngress', () => {
     const reqWithNoOrigin = new Request('https://example.com')
     const errorReason = { toString: null }
     const response = createErrorResponseForIngress(reqWithNoOrigin, errorReason)
-    if (response.body == null) {
+    if (response.body === null) {
       return
     }
     const bodyReader = response.body.getReader()
     await bodyReader.read().then((body) => {
-      if (body.value == null) {
+      if (body.value === undefined) {
         return
       }
       const bodyString = Array.from<number>(body.value)
@@ -96,12 +96,12 @@ describe('createFallbackErrorResponse', () => {
   })
   test('response body is as expected', async () => {
     expect(response.body).not.toBeNull()
-    if (response.body == null) {
+    if (response.body === null) {
       return
     }
     const bodyReader = response.body.getReader()
     await bodyReader.read().then((body) => {
-      if (body.value == null) {
+      if (body.value === undefined) {
         return
       }
       const bodyString = Array.from<number>(body.value)

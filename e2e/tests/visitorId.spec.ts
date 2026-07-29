@@ -62,7 +62,7 @@ test.describe('visitorId', () => {
           }
         }
       }
-    } catch (e) {
+    } catch {
       // do nothing
     }
 
