@@ -3,7 +3,7 @@
 ## Requirements
 
 - Node 24 (for development; the published package supports Node >=16 as specified in `package.json`)
-- Typescript 4+
+- Typescript 6+
 - Playwright
 - [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) v4+
 
@@ -90,8 +90,8 @@ End-to-end tests are located in the `e2e` folder and run by [playwright](https:/
 The `teste2e.yml` workflow is responsible for deploying a new Cloudflare worker, running end-to-end tests, and cleaning up the worker in the end. `teste2e.yml` works like this:
 1. Check out the current branch (can be any branch).
 2. Bump version according to the input, default to `patch`.
-3. Generate environment variables, such as `WORKER_NAME` and `GET_RESULT_PATH`. Put them inside `wranger.toml`.
-4. Publish the worker using `cloudfare/wrangler-action` to the designated Cloudflare account.
+3. Generate environment variables, such as `WORKER_NAME` and `GET_RESULT_PATH`. Put them inside `e2e-deploy/wrangler.json`.
+4. Publish the worker using `cloudflare/wrangler-action` to the designated Cloudflare account.
 5. Install `playwright`.
 6. Run `pnpm test:e2e` with env variables `test_client_domain`, `worker_version`, `worker_path`, `get_result_path`, and `agent_download_path`.
 7. Delete the published Cloudflare worker from the Cloudflare account.
@@ -108,10 +108,9 @@ The `teste2e.yml` workflow also includes a job to run the test suite from [finge
 The job runs the test suite twice: once with the default compatibility date for the Cloudflare worker runtime and once with the current date (the latest compatibility date).
 See the [Cloudflare documentation for compatibility dates](https://developers.cloudflare.com/workers/configuration/compatibility-dates/) for more information.
 
-
 ### How to release a new version
 
-The workflow `release.yml` is responsible for releasing a new version. Run it on the `main` branch.
+We use [changesets](https://github.com/changesets/changesets) for handling release notes. If there are relevant changes, please add a changeset via `pnpm exec changeset` (run `pnpm install` first).
 
 ### How to keep your worker up-to-date
 
