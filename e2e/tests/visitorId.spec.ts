@@ -106,11 +106,7 @@ test.describe('visitorId', () => {
       console.log(`Running goto url (attempt ${attempt}/${MAX_PAGE_ATTEMPTS}): ${url}...`)
       try {
         // Navigation can itself fail, so retry it too rather than aborting the loop on the first error.
-        if (attempt === 1) {
-          await page.goto(url, { waitUntil: 'domcontentloaded' })
-        } else {
-          await page.reload({ waitUntil: 'domcontentloaded' })
-        }
+        await page.goto(url, { waitUntil: 'domcontentloaded' })
       } catch (err) {
         console.log(`Navigation failed on attempt ${attempt}/${MAX_PAGE_ATTEMPTS}: ${String(err)}`)
         if (attempt === MAX_PAGE_ATTEMPTS) {
