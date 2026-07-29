@@ -102,10 +102,19 @@ test.describe('visitorId', () => {
   async function runTest(page: Page, url: string) {
     for (let attempt = 1; attempt <= MAX_PAGE_ATTEMPTS; attempt++) {
       console.log(`Running goto url (attempt ${attempt}/${MAX_PAGE_ATTEMPTS}): ${url}...`)
-      if (attempt === 1) {
-        await page.goto(url, { waitUntil: 'domcontentloaded' })
-      } else {
-        await page.reload({ waitUntil: 'domcontentloaded' })
+      try {
+        // Navigation can itself fail, so retry it too rather than aborting the loop on the first error.
+        if (attempt === 1) {
+          await page.goto(url, { waitUntil: 'domcontentloaded' })
+        } else {
+          await page.reload({ waitUntil: 'domcontentloaded' })
+        }
+      } catch (err) {
+        console.log(`Navigation failed on attempt ${attempt}/${MAX_PAGE_ATTEMPTS}: ${String(err)}`)
+        if (attempt === MAX_PAGE_ATTEMPTS) {
+          throw err
+        }
+        continue
       }
 
       if (await waitForResults(page, RESULT_TIMEOUT_MS)) {
