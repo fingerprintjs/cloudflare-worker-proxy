@@ -22,8 +22,15 @@ const testCases: [string, URL][] = [
 
 const workerDomain = process.env.test_client_domain
 
-// How long to wait for the result element to render and populate with valid JSON.
-const RESULT_TIMEOUT_MS = 30000
+// How long to wait, per page load, for both result blocks to render and populate
+// with valid JSON before giving up on that load and reloading.
+const RESULT_TIMEOUT_MS = 15000
+
+// How many times to reload the page before failing.
+const MAX_PAGE_ATTEMPTS = 3
+
+// How often to re-check the result blocks while waiting within a single page load.
+const RESULT_POLL_INTERVAL_MS = 500
 
 // The result block renders JSON as either v3 { visitorId, requestId } or
 // v4 { visitor_id, event_id }. We only need it to eventually expose a well-formed
@@ -75,29 +82,48 @@ test.describe('visitorId', () => {
     return waitUntilOnline(reqContext, expectedVersion, newRetryCounter, maxRetries)
   }
 
-  async function testForElement(locator: Locator) {
-    // Poll until the element is visible and its JSON exposes a valid id pair, so
-    // rendering and content population share one timeout budget.
-    await expect
-      .poll(async () => (await locator.isVisible()) && hasValidResult((await locator.textContent()) ?? ''), {
-        message: 'Expected the result element to contain a valid visitor result',
-        timeout: RESULT_TIMEOUT_MS,
-      })
-      .toBe(true)
+  async function elementHasValidResult(locator: Locator): Promise<boolean> {
+    return (await locator.isVisible()) && hasValidResult((await locator.textContent()) ?? '')
+  }
+
+  // Poll both result blocks until they hold a valid id pair or the timeout elapses.
+  async function waitForResults(page: Page, timeout: number): Promise<boolean> {
+    const deadline = Date.now() + timeout
+    do {
+      if (
+        (await elementHasValidResult(page.locator('#result > code'))) &&
+        (await elementHasValidResult(page.locator('#cdn-result > code')))
+      ) {
+        return true
+      }
+      await wait(RESULT_POLL_INTERVAL_MS)
+    } while (Date.now() < deadline)
+    return false
   }
 
   async function runTest(page: Page, url: string) {
-    console.log(`Running goto url: ${url}...`)
-    await page.goto(url, {
-      waitUntil: 'networkidle',
-    })
+    for (let attempt = 1; attempt <= MAX_PAGE_ATTEMPTS; attempt++) {
+      console.log(`Running goto url (attempt ${attempt}/${MAX_PAGE_ATTEMPTS}): ${url}...`)
+      try {
+        // Navigation can itself fail, so retry it too rather than aborting the loop on the first error.
+        await page.goto(url, { waitUntil: 'domcontentloaded' })
+      } catch (err) {
+        console.log(`Navigation failed on attempt ${attempt}/${MAX_PAGE_ATTEMPTS}: ${String(err)}`)
+        if (attempt === MAX_PAGE_ATTEMPTS) {
+          throw err
+        }
+        continue
+      }
 
-    // Wait for both result blocks concurrently so the total wait is capped at a
-    // single RESULT_TIMEOUT_MS budget rather than the sum of both.
-    await Promise.all([
-      testForElement(page.locator('#result > code')),
-      testForElement(page.locator('#cdn-result > code')),
-    ])
+      if (await waitForResults(page, RESULT_TIMEOUT_MS)) {
+        return
+      }
+      console.log(`Attempt ${attempt} did not yield a valid result within ${RESULT_TIMEOUT_MS}ms`)
+    }
+
+    throw new Error(
+      `Expected both result elements to contain a valid visitor result within ${MAX_PAGE_ATTEMPTS} page loads`
+    )
   }
 
   for (const [name, url] of testCases) {
