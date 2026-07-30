@@ -1,8 +1,8 @@
-import { parse } from 'cookie'
+import { parseCookie } from 'cookie'
 
 export function filterCookies(headers: Headers, filterFunc: (key: string) => boolean): Headers {
   const newHeaders = new Headers(headers)
-  const cookie = parse(headers.get('cookie') || '', { decode: (str) => str })
+  const cookie = parseCookie(headers.get('cookie') || '', { decode: (str: string) => str })
   const filteredCookieList = []
   for (const cookieName in cookie) {
     if (filterFunc(cookieName)) {
