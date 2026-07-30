@@ -1,5 +1,11 @@
 # Fingerprint Cloudflare Worker Proxy Integration
 
+## 1.7.1
+
+### Patch Changes
+
+- Upgrade `cookie` dependency from v1 to v2. ~22% smaller bundle size. No customer-facing changes. ([88bba44](https://github.com/fingerprintjs/cloudflare-worker-proxy/commit/88bba44571a4ab25986796c0aa564a4189b9cb2a))
+
 ## 1.7.0
 
 ### Minor Changes
