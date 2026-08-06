@@ -86,18 +86,58 @@ test.describe('visitorId', () => {
       .toBe(true)
   }
 
+  function attachDiagnostics(page: Page) {
+    page.on('console', (msg) => console.log(`[browser console:${msg.type()}] ${msg.text()}`))
+    page.on('pageerror', (err) => console.log(`[browser pageerror] ${String(err)}`))
+    page.on('requestfailed', (req) =>
+      console.log(`[requestfailed] ${req.method()} ${req.url()} -> ${req.failure()?.errorText ?? 'unknown'}`)
+    )
+    page.on('response', (res) => {
+      if (res.status() >= 400) {
+        console.log(`[response ${res.status()}] ${res.request().method()} ${res.url()}`)
+      }
+    })
+  }
+
+  async function dumpPageState(page: Page) {
+    try {
+      console.log(`[debug] page.url()=${page.url()}`)
+      console.log(
+        `[debug] #result > code = ${await page
+          .locator('#result > code')
+          .textContent()
+          .catch(() => '<none>')}`
+      )
+      console.log(
+        `[debug] #cdn-result > code = ${await page
+          .locator('#cdn-result > code')
+          .textContent()
+          .catch(() => '<none>')}`
+      )
+      console.log(`[debug] page content:\n${await page.content()}`)
+    } catch (err) {
+      console.log(`[debug] failed to dump page state: ${String(err)}`)
+    }
+  }
+
   async function runTest(page: Page, url: string) {
+    attachDiagnostics(page)
     console.log(`Running goto url: ${url}...`)
     await page.goto(url, {
       waitUntil: 'networkidle',
     })
 
-    // Wait for both result blocks concurrently so the total wait is capped at a
-    // single RESULT_TIMEOUT_MS budget rather than the sum of both.
-    await Promise.all([
-      testForElement(page.locator('#result > code')),
-      testForElement(page.locator('#cdn-result > code')),
-    ])
+    try {
+      // Wait for both result blocks concurrently so the total wait is capped at a
+      // single RESULT_TIMEOUT_MS budget rather than the sum of both.
+      await Promise.all([
+        testForElement(page.locator('#result > code')),
+        testForElement(page.locator('#cdn-result > code')),
+      ])
+    } catch (err) {
+      await dumpPageState(page)
+      throw err
+    }
   }
 
   for (const [name, url] of testCases) {

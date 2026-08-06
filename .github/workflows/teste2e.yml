@@ -216,7 +216,50 @@ jobs:
           worker_path: ${{steps.random-path-generator.outputs.WORKER_PATH}}
           get_result_path: ${{ steps.random-path-generator.outputs.GET_RESULT_PATH }}
           agent_download_path: ${{ steps.random-path-generator.outputs.AGENT_DOWNLOAD_PATH }}
-      
+
+      - name: Mask secret domain in Playwright traces
+        if: failure() || runner.debug == '1'
+        env:
+          TEST_CLIENT_DOMAIN: ${{ secrets.TEST_CLIENT_DOMAIN }}
+          PLACEHOLDER: "TEST_CLIENT_DOMAIN"
+        run: |
+          set -euo pipefail
+          if [ -z "${TEST_CLIENT_DOMAIN:-}" ]; then
+            echo "TEST_CLIENT_DOMAIN is not set; nothing to mask."
+            exit 0
+          fi
+          [ -d test-results ] || { echo "No test-results directory"; exit 0; }
+
+          mask() {
+            find "$1" -type f -exec perl -pi -e \
+              'BEGIN { $d = $ENV{TEST_CLIENT_DOMAIN}; $p = $ENV{PLACEHOLDER} } s/\Q$d\E/$p/g' {} +
+          }
+
+          root="$(pwd)"
+          find test-results -type f -name '*.zip' -print | while IFS= read -r zip; do
+            tmp="$(mktemp -d)"
+            if unzip -q -o "$zip" -d "$tmp"; then
+              mask "$tmp"
+              (cd "$tmp" && zip -q -r -X "$root/$zip.masked" .)
+              mv "$root/$zip.masked" "$root/$zip"
+            fi
+            rm -rf "$tmp"
+          done
+
+          find test-results -type f ! -name '*.zip' -exec perl -pi -e \
+            'BEGIN { $d = $ENV{TEST_CLIENT_DOMAIN}; $p = $ENV{PLACEHOLDER} } s/\Q$d\E/$p/g' {} +
+
+          echo "Masked TEST_CLIENT_DOMAIN in Playwright reports."
+
+      - name: Upload Playwright traces
+        if: failure() || runner.debug == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-${{ matrix.default_compatibility_date }}
+          path: test-results/
+          retention-days: 1
+          if-no-files-found: ignore
+
       - name: Clean up worker
         run: |
           curl -i -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{secrets.CF_ACCOUNT_ID}}/workers/scripts/${{steps.random-path-generator.outputs.WORKER_NAME}}" -H"Authorization: bearer ${{secrets.CF_API_TOKEN}}"
