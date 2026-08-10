@@ -206,8 +206,9 @@ jobs:
         run: echo "prop=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
       
       - name: Install playwright dependencies
-        run: pnpm exec playwright install
-      
+        run: pnpm exec playwright install chromium --with-deps
+        timeout-minutes: 10
+
       - name: Run test
         run: pnpm test:e2e
         env:
