@@ -35,6 +35,12 @@ jobs:
           set -euo pipefail
 
           echo "Removing e2e test workers older than ${DAYS} day(s). dryRun=${DRY_RUN}"
+
+          if ! [[ "${DAYS}" =~ ^[0-9]+$ ]]; then
+            echo "Invalid DAYS value: '${DAYS}'. Expected a non-negative integer."
+            exit 1
+          fi
+
           cutoff="$(date -u -d "-${DAYS} days" +%s)"
 
           # List every Worker script on the account.
