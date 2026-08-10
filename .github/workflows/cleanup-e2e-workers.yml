@@ -112,6 +112,9 @@ jobs:
               echo "| \`${name}\` | ❌ failed |" >> "$GITHUB_STEP_SUMMARY"
               failures=$((failures + 1))
             fi
+
+            # Avoid Cloudflare API rate limits
+            sleep 1
           done
 
           if [ "$failures" -gt 0 ]; then
