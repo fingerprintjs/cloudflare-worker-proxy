@@ -1,0 +1,114 @@
+name: Cleanup e2e test workers
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Delete workers older than this many days'
+        required: false
+        default: '7'
+      dryRun:
+        description: 'List matching workers without deleting them'
+        type: boolean
+        required: false
+        # TODO: default is temporarily true so the first runs only report what
+        # would be deleted. Switch to false once the output looks correct and
+        # team decide to keep the workflow.
+        default: true
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    name: Delete stale e2e test workers
+    steps:
+      - name: Delete workers older than the configured age
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          # Fall back to the defaults on scheduled runs, where inputs are absent.
+          DAYS: ${{ github.event.inputs.days || '7' }}
+          # TODO: keep same default value with `workflow_dispatch`
+          DRY_RUN: ${{ github.event.inputs.dryRun || 'true' }}
+        run: |
+          set -euo pipefail
+
+          echo "Removing e2e test workers older than ${DAYS} day(s). dryRun=${DRY_RUN}"
+          cutoff="$(date -u -d "-${DAYS} days" +%s)"
+
+          # List every Worker script on the account.
+          response="$(curl -sS \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json")"
+
+          if [ "$(echo "$response" | jq -r '.success')" != "true" ]; then
+            echo "Failed to list workers:"
+            echo "$response" | jq -c '.errors'
+            exit 1
+          fi
+
+          # Keep only e2e/mock-e2e test workers whose creation time is past the
+          # cutoff. created_on may carry fractional seconds, so normalise to
+          # whole-second ISO-8601 before parsing.
+          mapfile -t stale < <(echo "$response" | jq -r --argjson cutoff "$cutoff" '
+            .result[]
+            | select(.id | test("^automated-test-.*-e2e$"))
+            | select(((.created_on[0:19] + "Z") | fromdateiso8601) < $cutoff)
+            | .id')
+
+          echo "Found ${#stale[@]} stale worker(s)."
+
+          # Job summary. We list worker names
+          if [ "${DRY_RUN}" = "true" ]; then
+            mode="dry-run (nothing deleted)"
+          else
+            mode="deleted"
+          fi
+          {
+            echo "## e2e worker cleanup"
+            echo ""
+            echo "- Mode: **${mode}**"
+            echo "- Older than: **${DAYS}** day(s)"
+            echo "- Matched: **${#stale[@]}** worker(s)"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${#stale[@]}" -eq 0 ]; then
+            echo "_No stale workers found._" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          {
+            echo "| Worker | Result |"
+            echo "| --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          failures=0
+          for name in "${stale[@]}"; do
+            [ -z "$name" ] && continue
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "[dry-run] would delete: ${name}"
+              echo "| \`${name}\` | would delete |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
+            echo "Deleting: ${name}"
+            result="$(curl -sS -X DELETE \
+              "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts/${name}" \
+              -H "Authorization: Bearer ${CF_API_TOKEN}")"
+            if [ "$(echo "$result" | jq -r '.success')" = "true" ]; then
+              echo "  deleted ${name}"
+              echo "| \`${name}\` | deleted |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "  FAILED to delete ${name}: $(echo "$result" | jq -c '.errors')"
+              echo "| \`${name}\` | ❌ failed |" >> "$GITHUB_STEP_SUMMARY"
+              failures=$((failures + 1))
+            fi
+          done
+
+          if [ "$failures" -gt 0 ]; then
+            echo "${failures} deletion(s) failed."
+            exit 1
+          fi
