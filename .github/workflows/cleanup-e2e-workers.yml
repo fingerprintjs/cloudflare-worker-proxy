@@ -2,7 +2,7 @@ name: Cleanup e2e test workers
 
 on:
   schedule:
-    - cron: '17 3 * * *'
+    - cron: '17 3 * * 1'
   workflow_dispatch:
     inputs:
       days:
@@ -13,10 +13,7 @@ on:
         description: 'List matching workers without deleting them'
         type: boolean
         required: false
-        # TODO: default is temporarily true so the first runs only report what
-        # would be deleted. Switch to false once the output looks correct and
-        # team decide to keep the workflow.
-        default: true
+        default: false
 
 jobs:
   cleanup:
@@ -29,8 +26,7 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           # Fall back to the defaults on scheduled runs, where inputs are absent.
           DAYS: ${{ github.event.inputs.days || '7' }}
-          # TODO: keep same default value with `workflow_dispatch`
-          DRY_RUN: ${{ github.event.inputs.dryRun || 'true' }}
+          DRY_RUN: ${{ github.event.inputs.dryRun || 'false' }}
         run: |
           set -euo pipefail
 
