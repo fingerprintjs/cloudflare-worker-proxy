@@ -42,7 +42,7 @@ function hasValidResult(text: string): boolean {
 }
 
 test.describe('visitorId', () => {
-  async function waitUntilOnline(
+  async function waitUntilStatusOnline(
     reqContext: APIRequestContext,
     expectedVersion: string,
     retryCounter = 0,
@@ -72,7 +72,7 @@ test.describe('visitorId', () => {
     }
 
     await wait(1000)
-    return waitUntilOnline(reqContext, expectedVersion, newRetryCounter, maxRetries)
+    return waitUntilStatusOnline(reqContext, expectedVersion, newRetryCounter, maxRetries)
   }
 
   async function testForElement(locator: Locator) {
@@ -86,25 +86,63 @@ test.describe('visitorId', () => {
       .toBe(true)
   }
 
+  function attachDiagnostics(page: Page) {
+    page.on('console', (msg) => console.log(`[browser console:${msg.type()}] ${msg.text()}`))
+    page.on('pageerror', (err) => console.log(`[browser pageerror] ${String(err)}`))
+    page.on('requestfailed', (req) =>
+      console.log(`[requestfailed] ${req.method()} ${req.url()} -> ${req.failure()?.errorText ?? 'unknown'}`)
+    )
+    page.on('response', (res) => {
+      if (res.status() >= 400) {
+        console.log(`[response ${res.status()}] ${res.request().method()} ${res.url()}`)
+      }
+    })
+  }
+
+  async function dumpPageState(page: Page) {
+    if (page.isClosed()) {
+      console.log('[debug] page/context already closed; see the uploaded trace')
+      return
+    }
+
+    const readText = (selector: string) =>
+      page
+        .locator(selector)
+        .textContent({ timeout: 1000 })
+        .catch((err) => `<unavailable: ${String(err)}>`)
+
+    console.log(`[debug] page.url()=${page.url()}`)
+    console.log(`[debug] #result > code = ${await readText('#result > code')}`)
+    console.log(`[debug] #cdn-result > code = ${await readText('#cdn-result > code')}`)
+    const content = await page.content().catch((err) => `<unavailable: ${String(err)}>`)
+    console.log(`[debug] page content:\n${content}`)
+  }
+
   async function runTest(page: Page, url: string) {
+    attachDiagnostics(page)
     console.log(`Running goto url: ${url}...`)
     await page.goto(url, {
       waitUntil: 'networkidle',
     })
 
-    // Wait for both result blocks concurrently so the total wait is capped at a
-    // single RESULT_TIMEOUT_MS budget rather than the sum of both.
-    await Promise.all([
-      testForElement(page.locator('#result > code')),
-      testForElement(page.locator('#cdn-result > code')),
-    ])
+    try {
+      // Wait for both result blocks concurrently so the total wait is capped at a
+      // single RESULT_TIMEOUT_MS budget rather than the sum of both.
+      await Promise.all([
+        testForElement(page.locator('#result > code')),
+        testForElement(page.locator('#cdn-result > code')),
+      ])
+    } catch (err) {
+      await dumpPageState(page)
+      throw err
+    }
   }
 
   for (const [name, url] of testCases) {
     test(`should show visitorId in the HTML (NPM & CDN) - ${name}`, async ({ page }) => {
       const reqContext = await request.newContext()
-      const isOnline = await waitUntilOnline(reqContext, INT_VERSION)
-      expect(isOnline).toBeTruthy()
+      const isStatusOnline = await waitUntilStatusOnline(reqContext, INT_VERSION)
+      expect(isStatusOnline).toBeTruthy()
 
       await runTest(page, url.href)
     })
