@@ -67,7 +67,7 @@ jobs:
         run: |
           jq \
             --arg name "${{steps.random-path-generator.outputs.WORKER_NAME}}" \
-            --arg route "${{ secrets.TEST_CLIENT_DOMAIN }}/${{steps.random-path-generator.outputs.WORKER_PATH}}/*" \
+            --arg route "${{ secrets.TEST_CLIENT_DOMAIN }}/${{steps.random-path-generator.outputs.WORKER_PATH}}*" \
             --arg get_result_path "${{ steps.random-path-generator.outputs.GET_RESULT_PATH }}" \
             --arg agent_download_path "${{ steps.random-path-generator.outputs.AGENT_DOWNLOAD_PATH }}" \
             --arg proxy_secret "secret" \
