@@ -204,7 +204,7 @@ describe('agent download request cache durations', () => {
       })
       const req = new Request(reqURL.toString())
       const response = await worker.fetch(req, workerEnv)
-      expect(response.headers.get('cache-control')).toBe('public, max-age=3600, s-maxage=60')
+      expect(response.headers.get('cache-control')).toBe('public, max-age=3600')
     }
   )
   test('browser cache is the same when original value is lower than an hour', async () => {
@@ -218,7 +218,20 @@ describe('agent download request cache durations', () => {
     })
     const req = new Request(reqURL.toString())
     const response = await worker.fetch(req, workerEnv)
-    expect(response.headers.get('cache-control')).toBe('public, max-age=100, s-maxage=60')
+    expect(response.headers.get('cache-control')).toBe('public, max-age=100')
+  })
+  test('s-maxage is not added when the origin does not send one', async () => {
+    fetchSpy.mockImplementation(async () => {
+      const responseHeaders = new Headers({
+        'content-type': 'text/javascript',
+        'cache-control': 'public, max-age=3570',
+      })
+
+      return new Response('', { headers: responseHeaders })
+    })
+    const req = new Request(reqURL.toString())
+    const response = await worker.fetch(req, workerEnv)
+    expect(response.headers.get('cache-control')).toBe('public, max-age=3570')
   })
   test('proxy cache set to a minute when original value is higher', async () => {
     fetchSpy.mockImplementation(async () => {
