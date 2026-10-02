@@ -1,4 +1,3 @@
-export { getCacheControlHeaderWithMaxAgeIfLower } from './getCacheControlHeaderWithMaxAgeIfLower'
 export {
   createErrorResponseForIngress,
   createFallbackErrorResponse,
@@ -12,4 +11,3 @@ export { addProxyIntegrationHeaders, getIPFromHeaders } from './addProxyIntegrat
 export { filterCookies } from './cookie'
 export { createRoutePathPrefix, removeTrailingSlashesAndMultiSlashes, stripPrefixPathSegments } from './routing'
 export { getAgentScriptEndpoint, getIngressEndpoint } from './proxyEndpoint'
-export { createResponseWithMaxAge } from './createResponseWithMaxAge'
