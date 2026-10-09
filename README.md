@@ -21,7 +21,7 @@ The Fingerprint Cloudflare Integration is responsible for
 - Proxying download requests of the latest Fingerprint JS Agent between your site and Fingerprint CDN.
 - Proxying identification requests and responses between your site and Fingerprint's APIs.
 
-This [improves](https://docs.fingerprint.com/docs/cloudflare-integration#the-benefits-of-using-the-cloudflare-integration) both accuracy and reliability of visitor identification and bot detection on your site.
+This [improves](https://docs.fingerprint.com/docs/cloudflare-integration#the-benefits-of-using-cloudflare-proxy-integration) both accuracy and reliability of visitor identification and bot detection on your site.
 
 ## Requirements
 
