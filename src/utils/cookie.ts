@@ -20,7 +20,7 @@ function parseCookies(str: string): Cookies {
   let index = 0
 
   do {
-    const eqIdx = eqIndex(str, index, len)
+    const eqIdx = str.indexOf('=', index)
     if (eqIdx === -1) {
       break
     } // No more cookie pairs.
@@ -52,14 +52,6 @@ function parseCookies(str: string): Cookies {
 function endIndex(str: string, min: number, len: number) {
   const index = str.indexOf(';', min)
   return index === -1 ? len : index
-}
-
-/**
- * Find the `=` character between `min` and `max` in str.
- */
-function eqIndex(str: string, min: number, max: number) {
-  const index = str.indexOf('=', min)
-  return index < max ? index : -1
 }
 
 /**
