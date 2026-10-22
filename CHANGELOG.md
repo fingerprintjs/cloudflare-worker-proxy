@@ -1,5 +1,11 @@
 # Fingerprint Cloudflare Worker Proxy Integration
 
+## 1.7.1
+
+### Patch Changes
+
+- Replace `cookie` dependency with a built-in cookie parser. No customer-facing changes. ([aaa31eb](https://github.com/fingerprintjs/cloudflare-worker-proxy/commit/aaa31ebe5b4754741e05898ff80f3f7559522786))
+
 ## 1.7.0
 
 ### Minor Changes
