@@ -3,7 +3,6 @@ import {
   addProxyIntegrationHeaders,
   createErrorResponseForIngress,
   createFallbackErrorResponse,
-  createResponseWithMaxAge,
   filterCookies,
 } from '../utils'
 import { addTrafficMonitoringSearchParamsForIngressRequest } from '../utils/addTrafficMonitoring'
@@ -30,7 +29,9 @@ export async function handleApiRequest(receivedRequest: Request, env: WorkerEnv,
     }
 
     console.log(`Sending ${fingerprintRequest.method} to ${fingerprintRequest.url}...`)
-    return await fetch(fingerprintRequest).then((originResponse) => modifyResponseIfNecessary(originResponse))
+    // The response is copied so that its headers stay mutable, because headers on a `fetch`
+    // response are immutable and `returnHttpResponse` strips `Strict-Transport-Security`.
+    return await fetch(fingerprintRequest).then((originResponse) => new Response(originResponse.body, originResponse))
   } catch (e) {
     if (!methodAuthorized) {
       return createFallbackErrorResponse(e)
@@ -38,17 +39,6 @@ export async function handleApiRequest(receivedRequest: Request, env: WorkerEnv,
 
     return createErrorResponseForIngress(receivedRequest, e)
   }
-}
-
-export function modifyResponseIfNecessary(originResponse: Response): Response {
-  const modifiedResponse = new Response(originResponse.body, originResponse)
-  const contentType = modifiedResponse.headers.get('Content-Type')
-  if (contentType?.trimStart().startsWith('text/javascript')) {
-    const maxMaxAge = 60 * 60
-    const maxSMaxAge = 60
-    return createResponseWithMaxAge(modifiedResponse, maxMaxAge, maxSMaxAge)
-  }
-  return modifiedResponse
 }
 
 export function isMethodAuthorized(method: string) {
